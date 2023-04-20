@@ -1,0 +1,3 @@
+numpy>=1.22
+qiskit>=0.42
+qiskit_ibm_provider>=0.5
