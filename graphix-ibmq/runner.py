@@ -2,6 +2,7 @@ import numpy as np
 from qiskit_ibm_provider import IBMProvider
 from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
 from qiskit import transpile
+from graphix.clifford import CLIFFORD_CONJ
 
 class IBMQBackend:
     """runs MBQC pattern with IBM quantum device."""
@@ -80,7 +81,7 @@ class IBMQBackend:
 
                 elif len(cmd) == 7:
                     cid = cmd[6]
-                    for op in CLIFFORD_TO_QISKIT[cid]:
+                    for op in CLIFFORD_TO_QISKIT[CLIFFORD_CONJ[cid]]:
                         exec(f"circ.{op}({circ_ind})")
 
                     if plane == 'XY':
