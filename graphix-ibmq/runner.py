@@ -7,16 +7,20 @@ from graphix.clifford import CLIFFORD_CONJ
 class IBMQBackend:
     """runs MBQC pattern with IBM quantum device."""
 
-    def __init__(self, pattern, instance, resource, shots):
+    def __init__(self, pattern, instance, resource, shots, save_statevector = False):
         """
         Parameteres
         -----------
         pattern: :class:`graphix.pattern.Pattern` object
-            MBQC pattern to be simulated.
+            MBQC pattern to be runned.
         instance : str
             instance name of IBMQ provider.
         resource : str
             resource name of IBMQ provider.
+        shots : int
+            number of shots.
+        save_statevector (False) : bool, optional
+            whether to save the statevector before the measurements of output qubits.
         """
         self.pattern = pattern
         self.instance = instance
@@ -24,9 +28,9 @@ class IBMQBackend:
         self.shots = shots
         self.provider = IBMProvider(instance = self.instance)
         self.backend = self.provider.get_backend(self.resource)
-        self.circ = self.to_qiskit()
+        self.circ = self.to_qiskit(save_statevector)
 
-    def to_qiskit(self):
+    def to_qiskit(self, save_statevector):
         """convert the MBQC pattern to the qiskit cuicuit and transpile for the designated resource.
         Returns
         -------
@@ -121,13 +125,24 @@ class IBMQBackend:
                 for op in CLIFFORD_TO_QISKIT[cid]:
                     exec(f"circ.{op}({circ_ind})")
 
-        for node in self.pattern.output_nodes:
-            circ_ind = qubit_dict[node]
-            circ.measure(circ_ind, node)
+        if save_statevector:
+            circ.save_statevector()
+            output_qubit = []
+            for node in self.pattern.output_nodes:
+                circ_ind = qubit_dict[node]
+                circ.measure(circ_ind, node)
+                output_qubit.append(circ_ind)
 
-        circ = transpile(circ, backend = self.backend)
+                circ = transpile(circ, backend = self.backend)
+            return circ, output_qubit
 
-        return circ
+        else:
+            for node in self.pattern.output_nodes:
+                circ_ind = qubit_dict[node]
+                circ.measure(circ_ind, node)
+
+                circ = transpile(circ, backend = self.backend)
+            return circ
     
 
 CLIFFORD_TO_QISKIT = [
