@@ -10,7 +10,7 @@ with open("graphix-ibmq/version.py") as fp:
 requirements = [requirement.strip() for requirement in open("requirements.txt").readlines()]
 
 info = {
-    "name": "graphix",
+    "name": "graphix_ibmq",
     "version": version["__version__"],
     "packages": find_packages(),
     "author": "Daichi Sasaki, Shinichi Sunami",
