@@ -2,39 +2,48 @@ import numpy as np
 from qiskit_ibm_provider import IBMProvider
 from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
 from qiskit import transpile
+from qiskit.providers.ibmq import least_busy
 from graphix.clifford import CLIFFORD_CONJ
 
 class IBMQBackend:
     """runs MBQC pattern with IBM quantum device."""
 
-    def __init__(self, pattern, instance, resource, shots, save_statevector = False):
+    def __init__(self, pattern):
         """
         Parameteres
         -----------
         pattern: :class:`graphix.pattern.Pattern` object
-            MBQC pattern to be runned.
+            MBQC pattern to be executed.
+        """
+        self.pattern = pattern
+
+    def get_backend(self, instance="ibm-q/open/main", resource=None):
+        """get the backend object
+        Parameteres
+        -----------
         instance : str
             instance name of IBMQ provider.
         resource : str
             resource name of IBMQ provider.
-        shots : int
-            number of shots.
+        """
+        self.instance = instance
+        self.provider = IBMProvider(instance=self.instance)
+        if resource is not None:
+            self.resource = resource
+            self.backend = self.provider.get_backend(self.resource)
+        else:
+            self.backend = least_busy(self.provider.backends(filters=lambda b: b.configuration().n_qubits >= 1 and not b.configuration().simulator and b.status().operational==True))
+            self.resource = self.backend.name       
+        print(f"Using backend {self.backend.name}")
+
+    def to_qiskit(self, save_statevector=False):
+        """convert the MBQC pattern to the qiskit cuicuit and add to attributes.
+        Parameteres
+        -----------
+        pattern : :class:`graphix.pattern.Pattern` object
+            MBQC pattern to be converted to qiskit circuit.
         save_statevector (False) : bool, optional
             whether to save the statevector before the measurements of output qubits.
-        """
-        self.pattern = pattern
-        self.instance = instance
-        self.resource = resource
-        self.shots = shots
-        self.provider = IBMProvider(instance = self.instance)
-        self.backend = self.provider.get_backend(self.resource)
-        self.circ = self.to_qiskit(save_statevector)
-
-    def to_qiskit(self, save_statevector):
-        """convert the MBQC pattern to the qiskit cuicuit and transpile for the designated resource.
-        Returns
-        -------
-        circ : :class:`qiskit.circuit.quantumcircuit.QuantumCircuit` object
         """
         n = self.pattern.max_space()
         N_node = self.pattern.Nnode
@@ -133,16 +142,24 @@ class IBMQBackend:
                 circ.measure(circ_ind, node)
                 output_qubit.append(circ_ind)
 
-                circ = transpile(circ, backend = self.backend)
-            return circ, output_qubit
+            self.circ = circ
+            self.circ_output = output_qubit
 
         else:
             for node in self.pattern.output_nodes:
                 circ_ind = qubit_dict[node]
                 circ.measure(circ_ind, node)
 
-                circ = transpile(circ, backend = self.backend)
-            return circ
+            self.circ = circ
+        
+    def transpile(self, optimization_level = 1):
+        """transpile the circuit for the designated resource.
+        Parameteres
+        -----------
+        optimization_level (1) : int, optional
+            the optimization level of the transpilation.
+        """
+        self.circ = transpile(self.circ, backend=self.backend, optimization_level=optimization_level)
     
 
 CLIFFORD_TO_QISKIT = [
