@@ -20,4 +20,4 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Run black
-        run: black -l 120 graphix-ibmq/ tests/ --check
+        run: black -l 120 graphix_ibmq/ tests/ --check
