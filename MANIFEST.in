@@ -1,5 +1,5 @@
 include README.md
 include MANIFEST.in
 include LICENSE
-include graphix-ibmq/version.py
+include graphix_ibmq/version.py
 prune docs/*

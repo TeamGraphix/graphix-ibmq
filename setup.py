@@ -18,7 +18,7 @@ info = {
     "maintainer": "Daichi Sasaki, Shinichi Sunami",
     "maintainer_email": "shinichi.sunami@gmail.com",
     "license": "Apache License 2.0",
-    "description": "IBMQ interface for graphix library",
+    "description": "IBMQ interface for graphix library, the MBQC compiler ",
     "long_description": long_description,
     "long_description_content_type": "text/markdown",
     "url": "https://graphix.readthedocs.io",
