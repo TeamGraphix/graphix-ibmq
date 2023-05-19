@@ -113,8 +113,7 @@ simulator = AerSimulator()
 circ_sim = transpile(backend.circ, simulator)
 
 # run and get counts
-result = simulator.run(circ_sim, shots=1024).result()
-masked_results = format_result(pattern, result)
+result = format_result(simulator.run(circ_sim, shots=1024).result())
 
 #%%
 # We can also simulate the circuit with noise model
@@ -156,6 +155,6 @@ for i in range(2**3):
 
 # plot and compare the results
 plot_histogram(
-    [count_theory, masked_results, result_noise],
+    [count_theory, result, result_noise],
     legend=["theoretical probability", "aer simulation", "aer simulation with noise model"],
 )
