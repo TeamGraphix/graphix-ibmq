@@ -104,6 +104,8 @@ plt.show()
 
 # minimize the space to save memory during aer simulation.
 pattern.minimize_space()
+
+# convert to qiskit circuit
 backend = IBMQBackend(pattern)
 backend.to_qiskit()
 print(type(backend.circ))
@@ -169,5 +171,5 @@ for i in range(2**3):
 # plot and compare the results
 plot_histogram(
     [count_theory, result, result_noise],
-    legend=["theoretical probability", "aer simulation", "aer simulation with noise model"],
+    legend=["theoretical probability", "execution results", "aer simulation with noise model"],
 )

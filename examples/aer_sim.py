@@ -102,6 +102,8 @@ plt.show()
 
 # minimize the space to save memory during aer simulation.
 pattern.minimize_space()
+
+# convert to qiskit circuit
 backend = IBMQBackend(pattern)
 backend.to_qiskit()
 print(type(backend.circ))
