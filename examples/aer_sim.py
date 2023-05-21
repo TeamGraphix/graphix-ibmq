@@ -7,6 +7,7 @@ We use the 3-qubit QFT as an example.
 
 First, let us import relevant modules and define additional gates and function we'll use:
 """
+#%%
 import numpy as np
 import matplotlib.pyplot as plt
 import networkx as nx

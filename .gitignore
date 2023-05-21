@@ -1,0 +1,8 @@
+**/__pycache__
+.pytest_cache
+.benchmarks
+**egg-info
+**/.DS_Store
+**/build
+dist/*
+docs/source/gallery/**
