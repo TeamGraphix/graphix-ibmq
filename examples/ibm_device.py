@@ -132,7 +132,7 @@ print(f"Using backend {backend.name}")
 circ_device = transpile(backend.circ, backend)
 job = backend.run(circ_device, shots=1024, dynamic=True)
 print(f"Your job's id: {job.job_id()}")
-result = format_result(job.result())
+result = format_result(pattern, job.result())
 
 #%%
 # Retrieve the job if needed
