@@ -138,7 +138,7 @@ result = format_result(pattern, job.result())
 # Retrieve the job if needed
 
 # job = provider.backend.retrieve_job("Job ID")
-# result = format_result(job.result())
+# result = format_result(pattern, job.result())
 
 #%%
 # We can simulate the circuit with noise model based on the device we used
