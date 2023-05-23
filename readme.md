@@ -1,5 +1,8 @@
 # Graphix IBMQ interface
 
+![PyPI](https://img.shields.io/pypi/v/graphix-ibmq)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/graphix-ibmq)
+
 Provides an interface to run MBQC pattern (`graphix.Pattern`) on IBM quantum devices as well as the Aer simulators.
 
 Requires [graphix](https://github.com/TeamGraphix/graphix) to generate the measurement pattern.
