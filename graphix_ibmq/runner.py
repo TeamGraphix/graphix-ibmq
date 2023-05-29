@@ -1,18 +1,33 @@
 import numpy as np
-from qiskit_ibm_provider import IBMProvider
-from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
-from qiskit import transpile
-from qiskit.providers.ibmq import least_busy
-from graphix.clifford import CLIFFORD_CONJ
+from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister, transpile
+from qiskit_ibm_provider import IBMProvider, least_busy
+from qiskit_aer import AerSimulator
+from qiskit_aer.noise import NoiseModel
+from graphix.clifford import CLIFFORD_CONJ, CLIFFORD_TO_QASM3
 
 
 class IBMQBackend:
-    """runs MBQC pattern with IBM quantum device."""
+    """Interface for MBQC pattern execution on IBM quantum device.
+
+    Attributes
+    ----------
+    pattern: :class:`graphix.pattern.Pattern` object
+        MBQC pattern to be executed.
+    circ: :class:`qiskit.circuit.quantumcircuit.QuantumCircuit` object
+        qiskit circuit corresponding to the pattern.
+    job: :class:`qiskit_ibm_provider.job.ibm_circuit_job.IBMCircuitJob` object
+        job object of the execution.
+    instance : str
+        instance name of IBMQ provider.
+    resource : str
+        resource name of IBMQ provider.
+    """
 
     def __init__(self, pattern):
         """
-        Parameteres
-        -----------
+
+        Parameters
+        ----------
         pattern: :class:`graphix.pattern.Pattern` object
             MBQC pattern to be executed.
         """
@@ -20,12 +35,17 @@ class IBMQBackend:
 
     def get_backend(self, instance="ibm-q/open/main", resource=None):
         """get the backend object
-        Parameteres
-        -----------
+
+        Parameters
+        ----------
         instance : str
             instance name of IBMQ provider.
         resource : str
             resource name of IBMQ provider.
+        backend : :class:`qiskit_ibm_provider.ibm_backend.IBMBackend` object
+            IBMQ device backend
+        circ : :class:`qiskit.circuit.quantumcircuit.QuantumCircuit` object
+            qiskit circuit corresponding to the pattern.
         """
         self.instance = instance
         self.provider = IBMProvider(instance=self.instance)
@@ -45,11 +65,12 @@ class IBMQBackend:
 
     def to_qiskit(self, save_statevector=False):
         """convert the MBQC pattern to the qiskit cuicuit and add to attributes.
-        Parameteres
-        -----------
+
+        Parameters
+        ----------
         pattern : :class:`graphix.pattern.Pattern` object
             MBQC pattern to be converted to qiskit circuit.
-        save_statevector (False) : bool, optional
+        save_statevector : bool, optional
             whether to save the statevector before the measurements of output qubits.
         """
         n = self.pattern.max_space()
@@ -101,7 +122,7 @@ class IBMQBackend:
 
                 elif len(cmd) == 7:
                     cid = cmd[6]
-                    for op in CLIFFORD_TO_QISKIT[CLIFFORD_CONJ[cid]]:
+                    for op in CLIFFORD_TO_QASM3[CLIFFORD_CONJ[cid]]:
                         exec(f"circ.{op}({circ_ind})")
 
                     if plane == "XY":
@@ -138,7 +159,7 @@ class IBMQBackend:
             if cmd[0] == "C":
                 circ_ind = qubit_dict[cmd[1]]
                 cid = cmd[2]
-                for op in CLIFFORD_TO_QISKIT[cid]:
+                for op in CLIFFORD_TO_QASM3[cid]:
                     exec(f"circ.{op}({circ_ind})")
 
         if save_statevector:
@@ -159,39 +180,102 @@ class IBMQBackend:
 
             self.circ = circ
 
-    def transpile(self, optimization_level=1):
+    def transpile(self, backend=None, optimization_level=1):
         """transpile the circuit for the designated resource.
-        Parameteres
-        -----------
-        optimization_level (1) : int, optional
+
+        Parameters
+        ----------
+        optimization_level : int, optional
             the optimization level of the transpilation.
         """
-        self.circ = transpile(self.circ, backend=self.backend, optimization_level=optimization_level)
+        if backend is None:
+            backend = self.backend
+        self.circ = transpile(self.circ, backend=backend, optimization_level=optimization_level)
 
+    def simulate(self, shots=1024, noise_model=None, format_result=True):
+        """simulate the circuit with Aer.
 
-CLIFFORD_TO_QISKIT = [
-    ["id"],
-    ["x"],
-    ["y"],
-    ["z"],
-    ["s"],
-    ["sdg"],
-    ["h"],
-    ["sdg", "h", "sdg"],
-    ["h", "x"],
-    ["sdg", "y"],
-    ["sdg", "x"],
-    ["h", "y"],
-    ["h", "z"],
-    ["sdg", "h", "sdg", "y"],
-    ["sdg", "h", "s"],
-    ["sdg", "h", "sdg", "x"],
-    ["sdg", "h"],
-    ["sdg", "h", "y"],
-    ["sdg", "h", "z"],
-    ["sdg", "h", "x"],
-    ["h", "s"],
-    ["h", "sdg"],
-    ["h", "x", "sdg"],
-    ["h", "x", "s"],
-]
+        Parameters
+        ----------
+        shots : int, optional
+            the number of shots.
+        noise_model : :class:`qiskit_aer.backends.aer_simulator.AerSimulator` object, optional
+            noise model to be used in the simulation.
+        format_result : bool, optional
+            whether to format the result so that only the result corresponding to the output qubit is taken out.
+        Returns
+        ----------
+        result :
+            the measurement result,
+            in the representation depending on the backend used.
+        """
+        if noise_model is not None:
+            if type(noise_model) is NoiseModel:
+                simulator = AerSimulator(noise_model=noise_model)
+            else:
+                simulator = AerSimulator.from_backend(noise_model)
+        else:
+            simulator = AerSimulator()
+        circ_sim = transpile(self.circ, simulator)
+        result = simulator.run(circ_sim, shots=shots).result()
+        if format_result:
+            result = self.format_result(result)
+
+        return result
+
+    def run(self, shots=1024, format_result=True, optimization_level=1):
+        """Perform the execution.
+
+        Returns
+        -------
+        result :
+            the measurement result,
+            in the representation depending on the backend used.
+        """
+        self.transpile(optimization_level=optimization_level)
+        self.job = self.backend.run(self.circ, shots=shots, dynamic=True)
+        print(f"Your job's id: {self.job.job_id()}")
+        result = self.job.result()
+        if format_result:
+            result = self.format_result(result)
+
+        return result
+
+    def format_result(self, result):
+        """Format the result so that only the result corresponding to the output qubit is taken out.
+
+        Returns
+        -------
+        masked_results : dict
+            Dictionary of formatted results.
+        """
+        masked_results = {}
+        N_node = self.pattern.Nnode + len(self.pattern.results)
+
+        # Iterate over original measurement results
+        for key, value in result.get_counts().items():
+            masked_key = ""
+            for idx in self.pattern.output_nodes:
+                masked_key += key[N_node - idx - 1]
+            if masked_key in masked_results:
+                masked_results[masked_key] += value
+            else:
+                masked_results[masked_key] = value
+
+        return masked_results
+
+    def retrieve_result(self, job_id, format_result=True):
+        """Retrieve the execution result.
+
+        Returns
+        -------
+        result :
+            the measurement result,
+            in the representation depending on the backend used.
+        """
+        self.job = self.provider.retrieve_job(job_id)
+        result = self.job.result()
+        if format_result:
+            result = self.format_result(result)
+
+        return result

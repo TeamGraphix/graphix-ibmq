@@ -14,10 +14,9 @@ import networkx as nx
 import random
 from graphix import Circuit
 from graphix_ibmq.runner import IBMQBackend
-from qiskit import transpile
 from qiskit.tools.visualization import plot_histogram
-from qiskit_aer import AerSimulator
 from qiskit_aer.noise import NoiseModel, depolarizing_error
+
 
 def cp(circuit, theta, control, target):
     """Controlled phase gate, decomposed"""
@@ -34,28 +33,6 @@ def swap(circuit, a, b):
     circuit.cnot(b, a)
     circuit.cnot(a, b)
 
-def format_result(pattern, result):
-    """Format the result so that only the result corresponding to the output qubit is taken out.
-
-    Returns
-    -------
-    masked_results : dict
-        Dictionary of formatted results.
-    """
-    masked_results = {} 
-    N_node = pattern.Nnode + len(pattern.results)
-
-    # Iterate over original measurement results
-    for key, value in result.get_counts().items():
-        masked_key = ""
-        for idx in pattern.output_nodes:
-            masked_key +=  key[N_node - idx - 1]
-        if masked_key in masked_results:
-            masked_results[masked_key] += value
-        else:
-            masked_results[masked_key] = value
-
-    return masked_results
 
 #%%
 # Now let us define a circuit to apply QFT to three-qubit state.
@@ -68,16 +45,16 @@ psi = {}
 # prepare random state for each input qubit
 for i in range(3):
     theta = random.uniform(0, np.pi)
-    phi = random.uniform(0, 2*np.pi)
+    phi = random.uniform(0, 2 * np.pi)
     circuit.ry(i, theta)
     circuit.rz(i, phi)
-    psi[i] = [np.cos(theta/2), np.sin(theta/2)*np.exp(1j*phi)]
+    psi[i] = [np.cos(theta / 2), np.sin(theta / 2) * np.exp(1j * phi)]
 
 # 8 dimension input statevector
-input_state = [0]*8 
-for i in range(8): 
+input_state = [0] * 8
+for i in range(8):
     i_str = f"{i:03b}"
-    input_state[i] = psi[0][int(i_str[0])]*psi[1][int(i_str[1])]*psi[2][int(i_str[2])]
+    input_state[i] = psi[0][int(i_str[0])] * psi[1][int(i_str[1])] * psi[2][int(i_str[2])]
 
 # QFT
 circuit.h(0)
@@ -112,11 +89,8 @@ print(type(backend.circ))
 #%%
 # We can now simulate the circuit with Aer.
 
-simulator = AerSimulator()
-circ_sim = transpile(backend.circ, simulator)
-
 # run and get counts
-result = format_result(pattern, simulator.run(circ_sim, shots=1024).result())
+result = backend.simulate()
 
 #%%
 # We can also simulate the circuit with noise model
@@ -125,7 +99,7 @@ result = format_result(pattern, simulator.run(circ_sim, shots=1024).result())
 noise_model = NoiseModel()
 # add depolarizing error to all single qubit u1, u2, u3 gates
 error = depolarizing_error(0.01, 1)
-noise_model.add_all_qubit_quantum_error(error, ['u1', 'u2', 'u3'])
+noise_model.add_all_qubit_quantum_error(error, ["u1", "u2", "u3"])
 
 # print noise model info
 print(noise_model)
@@ -133,28 +107,25 @@ print(noise_model)
 #%%
 # Now we can run the simulation with noise model
 
-sim_noise = AerSimulator(noise_model=noise_model)
-# transpile circuit for noisy basis gates
-circ_noise = transpile(backend.circ, sim_noise)
 # run and get counts
-result_noise = format_result(pattern, sim_noise.run(circ_noise).result())
+result_noise = backend.simulate(noise_model=noise_model)
 
 
 #%%
 # Now let us compare the results with theoretical output
 
 # calculate the theoretical output state
-state = [0]*8
-omega = np.exp(1j*np.pi/4)
+state = [0] * 8
+omega = np.exp(1j * np.pi / 4)
 
 for i in range(8):
     for j in range(8):
-        state[i] += input_state[j]*omega**(i*j)/2**1.5
+        state[i] += input_state[j] * omega ** (i * j) / 2**1.5
 
 # calculate the theoretical counts
 count_theory = {}
 for i in range(2**3):
-    count_theory[f"{i:03b}"] = 1024*np.abs(state[i])**2
+    count_theory[f"{i:03b}"] = 1024 * np.abs(state[i]) ** 2
 
 # plot and compare the results
 plot_histogram(
