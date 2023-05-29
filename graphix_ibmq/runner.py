@@ -21,6 +21,8 @@ class IBMQBackend:
         instance name of IBMQ provider.
     resource : str
         resource name of IBMQ provider.
+    backend : :class:`qiskit_ibm_provider.ibm_backend.IBMBackend` object
+        IBMQ device backend
     """
 
     def __init__(self, pattern):
@@ -42,10 +44,6 @@ class IBMQBackend:
             instance name of IBMQ provider.
         resource : str
             resource name of IBMQ provider.
-        backend : :class:`qiskit_ibm_provider.ibm_backend.IBMBackend` object
-            IBMQ device backend
-        circ : :class:`qiskit.circuit.quantumcircuit.QuantumCircuit` object
-            qiskit circuit corresponding to the pattern.
         """
         self.instance = instance
         self.provider = IBMProvider(instance=self.instance)
@@ -185,6 +183,8 @@ class IBMQBackend:
 
         Parameters
         ----------
+        backend : :class:`qiskit_ibm_provider.ibm_backend.IBMBackend` object, optional
+            backend to be used for transpilation.
         optimization_level : int, optional
             the optimization level of the transpilation.
         """
@@ -203,11 +203,11 @@ class IBMQBackend:
             noise model to be used in the simulation.
         format_result : bool, optional
             whether to format the result so that only the result corresponding to the output qubit is taken out.
+
         Returns
         ----------
-        result :
-            the measurement result,
-            in the representation depending on the backend used.
+        result : dict
+            the measurement result.
         """
         if noise_model is not None:
             if type(noise_model) is NoiseModel:
@@ -226,11 +226,19 @@ class IBMQBackend:
     def run(self, shots=1024, format_result=True, optimization_level=1):
         """Perform the execution.
 
+        Parameters
+        ----------
+        shots : int, optional
+            the number of shots.
+        format_result : bool, optional
+            whether to format the result so that only the result corresponding to the output qubit is taken out.
+        optimization_level : int, optional
+            the optimization level of the transpilation.
+
         Returns
         -------
-        result :
-            the measurement result,
-            in the representation depending on the backend used.
+        result : dict
+            the measurement result.
         """
         self.transpile(optimization_level=optimization_level)
         self.job = self.backend.run(self.circ, shots=shots, dynamic=True)
@@ -267,11 +275,17 @@ class IBMQBackend:
     def retrieve_result(self, job_id, format_result=True):
         """Retrieve the execution result.
 
+        Parameters
+        ----------
+        job_id : str
+            the id of the job.
+        format_result : bool, optional
+            whether to format the result so that only the result corresponding to the output qubit is taken out.
+
         Returns
         -------
-        result :
-            the measurement result,
-            in the representation depending on the backend used.
+        result : dict
+            the measurement result.
         """
         self.job = self.provider.retrieve_job(job_id)
         result = self.job.result()

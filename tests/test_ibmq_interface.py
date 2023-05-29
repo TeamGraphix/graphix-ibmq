@@ -1,6 +1,5 @@
 import unittest
 import numpy as np
-from qiskit_aer import AerSimulator
 from graphix_ibmq.runner import IBMQBackend
 import tests.random_circuit as rc
 
@@ -28,7 +27,6 @@ class TestIBMQInterface(unittest.TestCase):
 
         ibmq_backend = IBMQBackend(pattern)
         ibmq_backend.to_qiskit(save_statevector=True)
-        ibmq_backend.transpile(backend=AerSimulator())
         sim_result = ibmq_backend.simulate(format_result=False)
         state_qiskit = sim_result.get_statevector(ibmq_backend.circ)
         state_qiskit_mod = modify_statevector(state_qiskit, ibmq_backend.circ_output)
