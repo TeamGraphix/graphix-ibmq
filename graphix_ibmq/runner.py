@@ -3,8 +3,10 @@ from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister, transpile
 from qiskit_ibm_provider import IBMProvider, least_busy
 from qiskit_aer import AerSimulator
 from qiskit_aer.noise import NoiseModel
-from clifford import CLIFFORD_CONJ, CLIFFORD_TO_QISKIT
-
+from graphix_ibmq.clifford import (
+    CLIFFORD_CONJ,
+    CLIFFORD_TO_QISKIT,
+)
 
 class IBMQBackend:
     """Interface for MBQC pattern execution on IBM quantum device.
