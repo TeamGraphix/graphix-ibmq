@@ -3,7 +3,7 @@ from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister, transpile
 from qiskit_ibm_provider import IBMProvider, least_busy
 from qiskit_aer import AerSimulator
 from qiskit_aer.noise import NoiseModel
-from graphix.clifford import CLIFFORD_CONJ, CLIFFORD_TO_QASM3
+from clifford import CLIFFORD_CONJ, CLIFFORD_TO_QISKIT
 
 
 class IBMQBackend:
@@ -120,7 +120,7 @@ class IBMQBackend:
 
                 elif len(cmd) == 7:
                     cid = cmd[6]
-                    for op in CLIFFORD_TO_QASM3[CLIFFORD_CONJ[cid]]:
+                    for op in CLIFFORD_TO_QISKIT[CLIFFORD_CONJ[cid]]:
                         exec(f"circ.{op}({circ_ind})")
 
                     if plane == "XY":
@@ -157,7 +157,7 @@ class IBMQBackend:
             if cmd[0] == "C":
                 circ_ind = qubit_dict[cmd[1]]
                 cid = cmd[2]
-                for op in CLIFFORD_TO_QASM3[cid]:
+                for op in CLIFFORD_TO_QISKIT[cid]:
                     exec(f"circ.{op}({circ_ind})")
 
         if save_statevector:
