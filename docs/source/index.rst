@@ -10,6 +10,7 @@ Graphix_ibmq - executing MBQC patterns on IBMQ devices
    :maxdepth: 1
    :caption: Documentation:
 
+   tutorial
    gallery/index
    reference
 

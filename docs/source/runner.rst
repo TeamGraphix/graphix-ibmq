@@ -15,3 +15,11 @@ Device interface
     .. automethod:: to_qiskit
 
     .. automethod:: transpile
+
+    .. automethod:: simulate
+
+    .. automethod:: run
+
+    .. automethod:: format_result
+
+    .. automethod:: retrieve_result
