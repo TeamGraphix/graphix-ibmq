@@ -8,6 +8,7 @@ from graphix_ibmq.clifford import (
     CLIFFORD_TO_QISKIT,
 )
 
+
 class IBMQBackend:
     """Interface for MBQC pattern execution on IBM quantum device.
 
