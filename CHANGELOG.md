@@ -9,8 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Aer simulatotion method and execution method (#7)
+
 ### Changed
 
 ### Fixed
+
+- Remove dependency on graphix module inside runner.py (#9)
 
 ## [0.0.1] - 2023-05-22
