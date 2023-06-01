@@ -3,7 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Graphix_ibmq - executing MBQC patterns on IBMQ devices
+Graphix-ibmq - executing MBQC patterns on IBMQ devices
 ========================================
 
 .. toctree::
