@@ -1,10 +1,3 @@
-"""
-24 Unique single-qubit Clifford gates and their
-multiplications, conjugations and Pauli conjugations.
-
-"""
-
-
 import numpy as np
 
 # Conjugation of Clifford gates result in a Clifford gate.
