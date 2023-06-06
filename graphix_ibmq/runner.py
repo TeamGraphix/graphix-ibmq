@@ -56,7 +56,7 @@ class IBMQBackend:
         else:
             self.backend = least_busy(
                 self.provider.backends(
-                    filters=lambda b: b.configuration().n_qubits >= 1
+                    filters=lambda b: b.configuration().n_qubits >= self.pattern.max_space()
                     and not b.configuration().simulator
                     and b.status().operational == True
                 )
