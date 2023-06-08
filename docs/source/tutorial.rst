@@ -22,72 +22,73 @@ Generating MBQC pattern
 -------------------------------
 
 We first generate a MBQC pattern using ``graphix`` library.
-We use the 3-qubit QFT as an example.
+We use the 2-qubit QFT as an example.
 
-First, let us import relevant modules and define additional gates and function we'll use:
+First, let us import relevant modules and define function we will use:
 
 .. code-block:: python
 
+    from graphix import Circuit
+    from graphix_ibmq.runner import IBMQBackend
+    import qiskit.quantum_info as qi
+    from qiskit.visualization import plot_histogram
     import numpy as np
     import matplotlib.pyplot as plt
     import networkx as nx
-    import random
-    from graphix import Circuit
-    from graphix_ibmq.runner import IBMQBackend
-    from qiskit import IBMQ
-    from qiskit.tools.visualization import plot_histogram
-    from qiskit.providers.fake_provider import FakeLagos
+    from qiskit_ibm_provider import IBMProvider
 
 
+    #define the functions required for QFT
     def cp(circuit, theta, control, target):
-        """Controlled phase gate, decomposed"""
+        """Controlled phase gate, decomposed
+        """
         circuit.rz(control, theta / 2)
         circuit.rz(target, theta / 2)
         circuit.cnot(control, target)
         circuit.rz(target, -1 * theta / 2)
         circuit.cnot(control, target)
 
-
     def swap(circuit, a, b):
-        """swap gate, decomposed"""
+        """swap gate, decomposed
+        """
         circuit.cnot(a, b)
         circuit.cnot(b, a)
         circuit.cnot(a, b)
 
-Then we define a circuit to apply QFT to three-qubit state.
+    def qft_rotations(circuit, n):
+        """h and cp gates for each qubit
+        """
+        if n == circuit.width:
+            return circuit
+        circuit.h(n)
+        for qubit in range(n+1, circuit.width):
+            cp(circuit, np.pi / 2 ** (qubit - n), qubit, n)
+
+    def swap_registers(circuit, n):
+        """swap qubits for the output
+        """
+        for qubit in range(n // 2):
+            swap(circuit, qubit, n - qubit - 1)
+        return circuit
+
+    def qft(circuit, n):
+        """generate QFT circuit
+        """
+        for i in range(n):
+            qft_rotations(circuit, i)
+        swap_registers(circuit, n)
+
+Then we define a circuit to apply QFT to two-qubit state.
 
 .. code-block:: python
 
-    circuit = Circuit(3)
-    for i in range(3):
-        circuit.h(i)
-
-    psi = {}
-    # prepare random state for each input qubit
-    for i in range(3):
-        theta = random.uniform(0, np.pi)
-        phi = random.uniform(0, 2 * np.pi)
-        circuit.ry(i, theta)
-        circuit.rz(i, phi)
-        psi[i] = [np.cos(theta / 2), np.sin(theta / 2) * np.exp(1j * phi)]
-
-    # 8 dimension input statevector
-    input_state = [0] * 8
-    for i in range(8):
-        i_str = f"{i:03b}"
-        input_state[i] = psi[0][int(i_str[0])] * psi[1][int(i_str[1])] * psi[2][int(i_str[2])]
-
-    # QFT
-    circuit.h(0)
-    cp(circuit, np.pi / 2, 1, 0)
-    cp(circuit, np.pi / 4, 2, 0)
-    circuit.h(1)
-    cp(circuit, np.pi / 2, 2, 1)
-    circuit.h(2)
-    swap(circuit, 0, 2)
-
-    # transpile and plot the graph
+    # generate the 2-qubit QFT pattern
+    n = 2
+    circuit = Circuit(n)
+    qft(circuit, n)
     pattern = circuit.transpile()
+
+    #plot the pattern
     nodes, edges = pattern.get_graph()
     g = nx.Graph()
     g.add_nodes_from(nodes)
@@ -96,7 +97,7 @@ Then we define a circuit to apply QFT to three-qubit state.
     nx.draw(g)
     plt.show()
 
-.. figure:: ./../imgs/3qft_pattern.png
+.. figure:: ./../imgs/2qft_pattern.png
    :scale: 100 %
    :alt: 3-qubi qft pattern visualization
 
@@ -107,13 +108,19 @@ Now let us convert the pattern to qiskit circuit.
 
 .. code-block:: python
 
-    # minimize the space to save memory during aer simulation.
+    # minimize the space of pattern.
     pattern.minimize_space()
 
     # convert to qiskit circuit
     backend = IBMQBackend(pattern)
     backend.to_qiskit()
     print(type(backend.circ))
+
+    #set the rondom input state
+    psi = []
+    for i in range(n):
+        psi.append(qi.random_statevector(2, seed=100+i))
+    backend.set_input(psi)
 
 .. rst-class:: sphx-glr-script-out
 
@@ -127,23 +134,19 @@ Get the API token and load the IBMQ acount.
 
 .. code-block:: python
 
-    IBMQ.save_account("MY_API_TOKEN", overwrite=True)
-    IBMQ.load_account()
+    # load the account with API token
+    #IBMProvider.save_account(token='MY API TOKEN')
 
-Get provider and the backend.
-
-.. code-block:: python
-
-    instance_name = "ibm-q/open/main"
-    backend_name = "ibm_lagos"
-
-    backend.get_backend(instance=instance_name, resource=backend_name)
+    # get the device backend
+    instance_name = 'your/instance/name'
+    backend_name = "ibm_hanoi"
+    backend.get_backend(instance=instance_name,resource=backend_name)
 
 .. rst-class:: sphx-glr-script-out
 
  .. code-block:: none
 
-    Using backend ibm_lagos
+    Using backend ibm_hanoi
 
 .. code-block:: python
 
@@ -174,24 +177,31 @@ Now let us compare the results with theoretical output
 .. code-block:: python
 
     # calculate the theoretical output state
-    state = [0] * 8
-    omega = np.exp(1j * np.pi / 4)
+    def to_binary(i, n):
+        return format(i, '0' + str(n) + 'b')
 
-    for i in range(8):
-        for j in range(8):
-            state[i] += input_state[j] * omega ** (i * j) / 2**1.5
+    def state_tensor_prod(psi):
+        n = len(psi)
+        state = [1]*2**n 
+        for i in range(2**n): 
+            i_str = to_binary(i, n)
+            for j in range(n):
+                state[i] *= psi[j][int(i_str[j])]
+        return state
+   
+    state = state_tensor_prod(psi)
 
     # calculate the theoretical counts
     count_theory = {}
-    for i in range(2**3):
-        count_theory[f"{i:03b}"] = 1024 * np.abs(state[i]) ** 2
+    for i in range(len(state)):
+        count_theory[f"{i:02b}"] = 1024*np.abs(state[i])**2
 
     # plot and compare the results
     plot_histogram(
         [count_theory, result, result_noise],
-        legend=["theoretical probability", "execution results", "aer simulation with noise model"],
+        legend=["theoretical probability", "execution results", "aer simulation w/ noise model"],
     )
 
 .. figure:: ./../imgs/execution_output.png
-   :scale: 90 %
+   :scale: 75 %
    :alt: execution results with simulation and theoretical output
