@@ -98,7 +98,7 @@ Then we define a circuit to apply QFT to two-qubit state.
     plt.show()
 
 .. figure:: ./../imgs/2qft_pattern.png
-   :scale: 100 %
+   :scale: 85 %
    :alt: 3-qubi qft pattern visualization
 
 Pattern-to-circuit conversion
@@ -198,11 +198,16 @@ Now let us compare the results with theoretical output
         count_theory[f"{i:02b}"] = 1024*np.abs(state[i])**2
 
     # plot and compare the results
+    fig, ax = plt.subplots(figsize=(7,5))
     plot_histogram(
         [count_theory, result, result_noise],
-        legend=["theoretical probability", "execution results", "aer simulation w/ noise model"],
+        legend=["theoretical probability", "execution result", "Aer simulation w/ noise model"],
+        ax=ax,
+        bar_labels=False
     )
+    legend = ax.legend(fontsize=18)
+    legend = ax.legend(loc='upper left')
 
 .. figure:: ./../imgs/execution_output.png
-   :scale: 75 %
+   :scale: 85 %
    :alt: execution results with simulation and theoretical output

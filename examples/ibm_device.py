@@ -141,7 +141,12 @@ for i in range(2**3):
     count_theory[f"{i:03b}"] = 1024 * np.abs(state[i]) ** 2
 
 # plot and compare the results
+fig, ax = plt.subplots(figsize=(7,5))
 plot_histogram(
     [count_theory, result, result_noise],
-    legend=["theoretical probability", "execution results", "aer simulation with noise model"],
+    legend=["theoretical probability", "execution result", "Aer simulation w/ noise model"],
+    ax=ax,
+    bar_labels=False
 )
+legend = ax.legend(fontsize=18)
+legend = ax.legend(loc='upper left')

@@ -42,6 +42,7 @@ for i in range(3):
     circuit.h(i)
 
 psi = {}
+random.seed(100)
 # prepare random state for each input qubit
 for i in range(3):
     theta = random.uniform(0, np.pi)
@@ -128,8 +129,11 @@ for i in range(2**3):
     count_theory[f"{i:03b}"] = 1024 * np.abs(state[i]) ** 2
 
 # plot and compare the results
-plot_histogram(
-    [count_theory, result, result_noise],
-    legend=["theoretical probability", "aer simulation", "aer simulation with noise model"],
-)
+fig, ax = plt.subplots(figsize=(7,5))
+plot_histogram([count_theory, result, result_noise],
+               legend=["theoretical probability", "execution result", "Aer simulation w/ noise model"],
+               ax=ax,
+               bar_labels=False)
+legend = ax.legend(fontsize=18)
+legend = ax.legend(loc='upper left')
 # %%
