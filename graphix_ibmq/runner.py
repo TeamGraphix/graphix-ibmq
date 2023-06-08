@@ -181,6 +181,39 @@ class IBMQBackend:
 
             self.circ = circ
 
+    def set_input(self, psi):
+        """set the input state of the circuit.
+        The input states are set to the circuit qubits corresponding to the first n nodes prepared in the pattern.
+
+        Parameters
+        ----------
+        psi : list
+            list of the input states for each input.
+            Each input state is a list of complex of length 2, representing the coefficient of |0> and |1>.
+        """
+        n = len(self.pattern.output_nodes)
+        input_order = {}
+        ind = 0
+        for cmd in self.pattern.seq:
+            if cmd[0] == "N":
+                if cmd[1] < n:
+                    input_order[ind] = cmd[1]
+                ind += 1
+            if len(input_order) == n:
+                break
+
+        ind = 0
+        for k, ope in enumerate(self.circ.data):
+            if ope[0].name == "reset":
+                if ind in input_order.keys():
+                    qubit_ind = ope[1][0].index
+                    i = input_order[ind]
+                    self.circ.initialize(psi[i], qubit_ind)
+                    self.circ.data[k + 1] = self.circ.data.pop(-1)
+                ind += 1
+            if ind >= max(input_order.keys()) + 1:
+                break
+
     def transpile(self, backend=None, optimization_level=1):
         """transpile the circuit for the designated resource.
 
