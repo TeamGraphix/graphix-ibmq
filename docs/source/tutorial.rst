@@ -5,7 +5,7 @@ Graphix-ibmq provides a interface to run MBQC pattern (`graphix.Pattern`) on IBM
 
 In this tutorial, we look at how to convert MBQC pattern into Qiskit circuit and run that circuit on IBM quantum device using graphix-ibmq library.
 
-We will explain the basics here along with the code, and you can go to :doc:`references` for module references.
+We will explain the basics here along with the code, and you can go to :doc:`reference` for module references.
 
 Installation
 -------------------------------
