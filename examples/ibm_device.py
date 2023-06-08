@@ -14,9 +14,10 @@ import networkx as nx
 import random
 from graphix import Circuit
 from graphix_ibmq.runner import IBMQBackend
-from qiskit import IBMQ
+from qiskit_ibm_provider import IBMProvider
 from qiskit.tools.visualization import plot_histogram
 from qiskit.providers.fake_provider import FakeLagos
+
 
 
 def cp(circuit, theta, control, target):
@@ -88,10 +89,13 @@ backend.to_qiskit()
 print(type(backend.circ))
 
 #%%
-# Get the API token and load the IBMQ acount.
+# load the account with API token
+IBMProvider.save_account(token='MY API TOKEN')
 
-IBMQ.save_account("MY_API_TOKEN", overwrite=True)
-IBMQ.load_account()
+# get the device backend
+instance_name = 'ibm-q/open/main'
+backend_name = "ibm_lagos"
+backend.get_backend(instance=instance_name,resource=backend_name)
 
 #%%
 # Get provider and the backend.

@@ -168,7 +168,8 @@ We can simulate the circuit with noise model based on the device we used
 .. code-block:: python
 
     # get the noise model of the device backend
-    backend_noisemodel = FakeLagos()
+    from qiskit.providers.fake_provider import FakeHanoi
+    backend_noisemodel = FakeHanoi()
     # execute noisy simulation and get counts
     result_noise = backend.simulate(noise_model=backend_noisemodel)
 
