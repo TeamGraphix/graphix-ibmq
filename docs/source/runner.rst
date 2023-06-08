@@ -14,6 +14,8 @@ Device interface
 
     .. automethod:: to_qiskit
 
+    .. automethod:: set_input
+
     .. automethod:: transpile
 
     .. automethod:: simulate

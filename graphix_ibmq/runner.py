@@ -187,7 +187,7 @@ class IBMQBackend:
 
         Parameters
         ----------
-        psi : list
+        psi : list of list of complex
             list of the input states for each input.
             Each input state is a list of complex of length 2, representing the coefficient of |0> and |1>.
         """
