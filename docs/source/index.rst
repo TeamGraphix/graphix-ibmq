@@ -4,7 +4,7 @@
    contain the root `toctree` directive.
 
 Graphix-ibmq - executing MBQC patterns on IBMQ devices
-========================================
+======================================================
 
 .. toctree::
    :maxdepth: 1

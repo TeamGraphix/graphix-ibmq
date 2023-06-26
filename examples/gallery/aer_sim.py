@@ -1,6 +1,6 @@
 """
 Converting MBQC pattern to qiskit circuit and simulating it with Aer
-===================
+====================================================================
 
 In this example, we will demonstrate how to convert MBQC pattern to qiskit circuit and simulate it with Aer.
 We use the 3-qubit QFT as an example.
@@ -35,7 +35,7 @@ def swap(circuit, a, b):
 
 
 #%%
-# Now let us define a circuit to apply QFT to three-qubit state.
+# Now let us define a circuit to apply QFT to three-qubit state and transpile into MBQC measurement pattern using graphix.
 
 circuit = Circuit(3)
 for i in range(3):
@@ -79,7 +79,8 @@ plt.show()
 #%%
 # Now let us convert the pattern to qiskit circuit.
 
-# minimize the space to save memory during aer simulation.
+# minimize the space to save memory during aer simulation
+# see https://graphix.readthedocs.io/en/latest/tutorial.html#minimizing-space-of-a-pattern
 pattern.minimize_space()
 
 # convert to qiskit circuit
@@ -113,9 +114,9 @@ result_noise = backend.simulate(noise_model=noise_model)
 
 
 #%%
-# Now let us compare the results with theoretical output
+# Now let us compare the results
 
-# calculate the theoretical output state
+# calculate the analytical 
 state = [0] * 8
 omega = np.exp(1j * np.pi / 4)
 
@@ -123,7 +124,7 @@ for i in range(8):
     for j in range(8):
         state[i] += input_state[j] * omega ** (i * j) / 2**1.5
 
-# calculate the theoretical counts
+# rescale the analytical amplitudes to compare with sampling results
 count_theory = {}
 for i in range(2**3):
     count_theory[f"{i:03b}"] = 1024 * np.abs(state[i]) ** 2

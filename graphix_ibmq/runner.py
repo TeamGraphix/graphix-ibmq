@@ -10,12 +10,12 @@ from graphix_ibmq.clifford import (
 
 
 class IBMQBackend:
-    """Interface for MBQC pattern execution on IBM quantum device.
+    """Interface for MBQC pattern execution on IBM quantum devices.
 
     Attributes
     ----------
     pattern: :class:`graphix.pattern.Pattern` object
-        MBQC pattern to be executed.
+        MBQC pattern to be run on the device
     circ: :class:`qiskit.circuit.quantumcircuit.QuantumCircuit` object
         qiskit circuit corresponding to the pattern.
     job: :class:`qiskit_ibm_provider.job.ibm_circuit_job.IBMCircuitJob` object
@@ -34,7 +34,7 @@ class IBMQBackend:
         Parameters
         ----------
         pattern: :class:`graphix.pattern.Pattern` object
-            MBQC pattern to be executed.
+            MBQC pattern to be run on the IBMQ device or Aer simulator.
         """
         self.pattern = pattern
 
@@ -260,7 +260,7 @@ class IBMQBackend:
         return result
 
     def run(self, shots=1024, format_result=True, optimization_level=1):
-        """Perform the execution.
+        """Run the MBQC pattern on IBMQ devices
 
         Parameters
         ----------
@@ -309,7 +309,7 @@ class IBMQBackend:
         return masked_results
 
     def retrieve_result(self, job_id, format_result=True):
-        """Retrieve the execution result.
+        """Retrieve the measurement results.
 
         Parameters
         ----------

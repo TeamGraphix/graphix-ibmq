@@ -1,5 +1,5 @@
 Device interface
-==============
+================
 
 :mod:`graphix_ibmq.runner` module
 +++++++++++++++++++++++++++++++++++

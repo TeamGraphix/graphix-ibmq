@@ -1,7 +1,7 @@
 Tutorial
 ========
 
-Graphix-ibmq provides a interface to run MBQC pattern (`graphix.Pattern`) on IBM quantum devices as well as the Aer simulators.
+Graphix-ibmq provides a interface to run MBQC pattern :ref:`(graphix.Pattern)<https://graphix.readthedocs.io/en/latest/modifier.html#graphix-pattern-module>` on IBM quantum devices as well as the Aer simulators.
 
 In this tutorial, we look at how to convert MBQC pattern into Qiskit circuit and run that circuit on IBM quantum device using graphix-ibmq library.
 
@@ -108,7 +108,8 @@ Now let us convert the pattern to qiskit circuit.
 
 .. code-block:: python
 
-    # minimize the space of pattern.
+    # minimize the space of pattern 
+    # see https://graphix.readthedocs.io/en/latest/tutorial.html#minimizing-space-of-a-pattern
     pattern.minimize_space()
 
     # convert to qiskit circuit
@@ -128,7 +129,7 @@ Now let us convert the pattern to qiskit circuit.
 
     <class 'qiskit.circuit.quantumcircuit.QuantumCircuit'>
 
-Execution on IBM quantum device
+Running pattern on IBM quantum device
 -------------------------------
 Get the API token and load the IBMQ acount.
 
@@ -173,11 +174,11 @@ We can simulate the circuit with noise model based on the device we used
     # execute noisy simulation and get counts
     result_noise = backend.simulate(noise_model=backend_noisemodel)
 
-Now let us compare the results with theoretical output
+Now let us compare the results with theoretical prediction
 
 .. code-block:: python
 
-    # calculate the theoretical output state
+    # calculate the predicted results
     def to_binary(i, n):
         return format(i, '0' + str(n) + 'b')
 
@@ -192,7 +193,7 @@ Now let us compare the results with theoretical output
    
     state = state_tensor_prod(psi)
 
-    # calculate the theoretical counts
+    # rescale the amplitudes to compare with sampling results
     count_theory = {}
     for i in range(len(state)):
         count_theory[f"{i:02b}"] = 1024*np.abs(state[i])**2
