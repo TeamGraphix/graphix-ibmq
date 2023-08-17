@@ -13,6 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+## [0.0.3] - 2023-08-17
+
+### Fixed
+
+- `qiskit-aer` added to requirements.txt as it seems necessary to be explicitly installed
+
 ## [0.0.2] - 2023-06-26
 
 ### Added
