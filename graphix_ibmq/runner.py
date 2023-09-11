@@ -81,7 +81,7 @@ class IBMQBackend:
         cr = ClassicalRegister(N_node)
         circ = QuantumCircuit(qr, cr)
 
-        empty_qubit = [i for i in range(n)]  # list indexicating the free circuit qubits
+        empty_qubit = [i for i in range(n)]  # list of free qubit indices
         qubit_dict = {}  # dictionary to record the correspondance of pattern nodes and circuit qubits
         register_dict = {}  # dictionary to record the correspondance of pattern nodes and classical registers
         reg_idx = 0  # index of classical register
