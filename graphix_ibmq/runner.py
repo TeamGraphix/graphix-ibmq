@@ -81,23 +81,45 @@ class IBMQBackend:
         cr = ClassicalRegister(N_node)
         circ = QuantumCircuit(qr, cr)
 
-        empty_qubit = [i for i in range(n)]  # list indicating the free circuit qubits
+        empty_qubit = [i for i in range(n)]  # list of free qubit indices
         qubit_dict = {}  # dictionary to record the correspondance of pattern nodes and circuit qubits
+        register_dict = {}  # dictionary to record the correspondance of pattern nodes and classical registers
+        reg_idx = 0  # index of classical register
+
+        def signal_process(op, signal):
+            if op == "X":
+                for s in signal:
+                    if s in register_dict.keys():
+                        s_idx = register_dict[s]
+                        with circ.if_test((cr[s_idx], 1)):
+                            circ.x(circ_idx)
+                    else:
+                        if self.pattern.results[s] == 1:
+                            circ.x(circ_idx)
+            if op == "Z":
+                for s in signal:
+                    if s in register_dict.keys():
+                        s_idx = register_dict[s]
+                        with circ.if_test((cr[s_idx], 1)):
+                            circ.z(circ_idx)
+                    else:
+                        if self.pattern.results[s] == 1:
+                            circ.z(circ_idx)
 
         for cmd in self.pattern.seq:
 
             if cmd[0] == "N":
-                circ_ind = empty_qubit[0]
+                circ_idx = empty_qubit[0]
                 empty_qubit.pop(0)
-                circ.reset(circ_ind)
-                circ.h(circ_ind)
-                qubit_dict[cmd[1]] = circ_ind
+                circ.reset(circ_idx)
+                circ.h(circ_idx)
+                qubit_dict[cmd[1]] = circ_idx
 
             if cmd[0] == "E":
                 circ.cz(qubit_dict[cmd[1][0]], qubit_dict[cmd[1][1]])
 
             if cmd[0] == "M":
-                circ_ind = qubit_dict[cmd[1]]
+                circ_idx = qubit_dict[cmd[1]]
                 plane = cmd[2]
                 alpha = cmd[3] * np.pi
                 s_list = cmd[4]
@@ -107,78 +129,74 @@ class IBMQBackend:
                     if plane == "XY":
                         # act p and h to implement non-Z-basis measurement
                         if alpha != 0:
-                            for s in s_list:  # act x every time 1 comes in the s_list
-                                with circ.if_test((cr[s], 1)):
-                                    circ.x(circ_ind)
-                            circ.p(-alpha, circ_ind)  # align |+_alpha> (or |+_-alpha>) with |+>
+                            signal_process("X", s_list)
+                            circ.p(-alpha, circ_idx)  # align |+_alpha> (or |+_-alpha>) with |+>
 
-                        for t in t_list:  # act z every time 1 comes in the t_list
-                            with circ.if_test((cr[t], 1)):
-                                circ.z(circ_ind)
+                        signal_process("Z", t_list)
 
-                        circ.h(circ_ind)  # align |+> with |0>
-
-                        circ.measure(circ_ind, cmd[1])  # measure and store the result
-                        empty_qubit.append(circ_ind)  # liberate the circuit qubit
+                        circ.h(circ_idx)  # align |+> with |0>
+                        circ.measure(circ_idx, reg_idx)  # measure and store the result
+                        register_dict[cmd[1]] = reg_idx
+                        reg_idx += 1
+                        empty_qubit.append(circ_idx)  # liberate the circuit qubit
 
                 elif len(cmd) == 7:
                     cid = cmd[6]
                     for op in CLIFFORD_TO_QISKIT[CLIFFORD_CONJ[cid]]:
-                        exec(f"circ.{op}({circ_ind})")
+                        exec(f"circ.{op}({circ_idx})")
 
                     if plane == "XY":
                         # act p and h to implement non-Z-basis measurement
                         if alpha != 0:
-                            for s in s_list:  # act x every time 1 comes in the s_list
-                                with circ.if_test((cr[s], 1)):
-                                    circ.x(circ_ind)
-                            circ.p(-alpha, circ_ind)  # align |+_alpha> (or |+_-alpha>) with |+>
+                            signal_process("X", s_list)
+                            circ.p(-alpha, circ_idx)  # align |+_alpha> (or |+_-alpha>) with |+>
 
-                        for t in t_list:  # act z every time 1 comes in the t_list
-                            with circ.if_test((cr[t], 1)):
-                                circ.z(circ_ind)
+                        signal_process("Z", t_list)
 
-                        circ.h(circ_ind)  # align |+> with |0>
-
-                        circ.measure(circ_ind, cmd[1])  # measure and store the result
-                        empty_qubit.append(circ_ind)  # liberate the circuit qubit
+                        circ.h(circ_idx)  # align |+> with |0>
+                        circ.measure(circ_idx, reg_idx)  # measure and store the result
+                        register_dict[cmd[1]] = reg_idx
+                        reg_idx += 1
+                        circ.measure(circ_idx, reg_idx)  # measure and store the result
+                        empty_qubit.append(circ_idx)  # liberate the circuit qubit
 
             if cmd[0] == "X":
-                circ_ind = qubit_dict[cmd[1]]
+                circ_idx = qubit_dict[cmd[1]]
                 s_list = cmd[2]
-                for s in s_list:
-                    with circ.if_test((cr[s], 1)):
-                        circ.x(circ_ind)
+                signal_process("X", s_list)
 
             if cmd[0] == "Z":
-                circ_ind = qubit_dict[cmd[1]]
+                circ_idx = qubit_dict[cmd[1]]
                 s_list = cmd[2]
-                for s in s_list:
-                    with circ.if_test((cr[s], 1)):
-                        circ.z(circ_ind)
+                signal_process("Z", s_list)
 
             if cmd[0] == "C":
-                circ_ind = qubit_dict[cmd[1]]
+                circ_idx = qubit_dict[cmd[1]]
                 cid = cmd[2]
                 for op in CLIFFORD_TO_QISKIT[cid]:
-                    exec(f"circ.{op}({circ_ind})")
+                    exec(f"circ.{op}({circ_idx})")
 
         if save_statevector:
             circ.save_statevector()
             output_qubit = []
             for node in self.pattern.output_nodes:
-                circ_ind = qubit_dict[node]
-                circ.measure(circ_ind, node)
-                output_qubit.append(circ_ind)
+                circ_idx = qubit_dict[node]
+                circ.measure(circ_idx, reg_idx)
+                register_dict[node] = reg_idx
+                reg_idx += 1
+                output_qubit.append(circ_idx)
 
             self.circ = circ
             self.circ_output = output_qubit
 
         else:
             for node in self.pattern.output_nodes:
-                circ_ind = qubit_dict[node]
-                circ.measure(circ_ind, node)
+                circ_idx = qubit_dict[node]
+                circ.measure(circ_idx, reg_idx)
+                register_dict[node] = reg_idx
+                reg_idx += 1
 
+            self.register_dict = register_dict
             self.circ = circ
 
     def set_input(self, psi):
@@ -193,25 +211,25 @@ class IBMQBackend:
         """
         n = len(self.pattern.output_nodes)
         input_order = {}
-        ind = 0
+        idx = 0
         for cmd in self.pattern.seq:
             if cmd[0] == "N":
                 if cmd[1] < n:
-                    input_order[ind] = cmd[1]
-                ind += 1
+                    input_order[idx] = cmd[1]
+                idx += 1
             if len(input_order) == n:
                 break
 
-        ind = 0
+        idx = 0
         for k, ope in enumerate(self.circ.data):
             if ope[0].name == "reset":
-                if ind in input_order.keys():
-                    qubit_ind = ope[1][0].index
-                    i = input_order[ind]
-                    self.circ.initialize(psi[i], qubit_ind)
+                if idx in input_order.keys():
+                    qubit_idx = ope[1][0].index
+                    i = input_order[idx]
+                    self.circ.initialize(psi[i], qubit_idx)
                     self.circ.data[k + 1] = self.circ.data.pop(-1)
-                ind += 1
-            if ind >= max(input_order.keys()) + 1:
+                idx += 1
+            if idx >= max(input_order.keys()) + 1:
                 break
 
     def transpile(self, backend=None, optimization_level=1):
@@ -294,13 +312,14 @@ class IBMQBackend:
             Dictionary of formatted results.
         """
         masked_results = {}
-        N_node = self.pattern.Nnode + len(self.pattern.results)
+        N_node = self.pattern.Nnode
 
         # Iterate over original measurement results
         for key, value in result.get_counts().items():
             masked_key = ""
             for idx in self.pattern.output_nodes:
-                masked_key += key[N_node - idx - 1]
+                reg_idx = self.register_dict[idx]
+                masked_key += key[N_node - reg_idx - 1]
             if masked_key in masked_results:
                 masked_results[masked_key] += value
             else:
