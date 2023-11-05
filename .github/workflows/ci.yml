@@ -6,7 +6,17 @@ name: pytest
 on:
   pull_request:
     branches: [ "master" ]
-
+  workflow_dispatch:
+    inputs:
+          logLevel:
+            description: 'Log level'
+            required: true
+            default: 'warning'
+            type: choice
+            options:
+            - info
+            - warning
+            - debug
 permissions:
   contents: read
 
@@ -16,7 +26,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ['ubuntu-latest', 'windows-2022', 'macos-latest']
-        python: ['3.8', '3.9', '3.10']
+        python: ['3.8', '3.9', '3.10', '3.11']
 
     name: "Python ${{ matrix.python }} / ${{ matrix.os }}"
     runs-on: ${{ matrix.os }}

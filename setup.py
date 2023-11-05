@@ -30,13 +30,14 @@ info = {
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: OS Independent",
         "Topic :: Scientific/Engineering :: Physics",
     ],
-    "python_requires": ">=3.8,<3.11",
+    "python_requires": ">=3.8,<3.12",
     "install_requires": requirements,
-    "extras_require": {'test': ['graphix>=0.2']},
+    "extras_require": {'test': ['graphix>=0.2.8']},
 }
 
 setup(**(info))
