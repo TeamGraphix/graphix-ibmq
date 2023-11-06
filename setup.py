@@ -1,4 +1,4 @@
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 with open("readme.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
@@ -37,7 +37,7 @@ info = {
     ],
     "python_requires": ">=3.8,<3.12",
     "install_requires": requirements,
-    "extras_require": {'test': ['graphix>=0.2.8']},
+    "extras_require": {"test": []},
 }
 
 setup(**(info))
