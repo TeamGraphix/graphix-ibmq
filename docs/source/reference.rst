@@ -5,3 +5,4 @@ Module reference
     :maxdepth: 2
 
     runner
+    converter
