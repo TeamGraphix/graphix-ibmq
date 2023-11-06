@@ -9,7 +9,6 @@ First, let us import relevant modules and define quantum circuit we want to conv
 
 
 # %%
-from IPython.display import display
 from qiskit import QuantumCircuit, transpile
 from qiskit.circuit.random.utils import random_circuit
 
