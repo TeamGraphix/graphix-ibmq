@@ -32,8 +32,6 @@ def qiskit_to_graphix(qc: QuantumCircuit) -> Circuit:
         elif ci.operation.name == "cx":
             circuit.cnot(ci.qubits[0].index, ci.qubits[1].index)
         else:
-            raise ValueError(
-                f"QuantumCircuit must not contain non-unitary component: {ci.operation.name}"
-            )
+            raise ValueError(f"QuantumCircuit must not contain non-unitary component: {ci.operation.name}")
 
     return circuit
