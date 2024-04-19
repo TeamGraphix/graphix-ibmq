@@ -56,7 +56,8 @@ class IBMQBackend:
         else:
             self.backend = least_busy(
                 self.provider.backends(
-                    filters=lambda b: b.configuration().n_qubits >= self.pattern.max_space()
+                    filters=lambda b: b.configuration().n_qubits
+                    >= self.pattern.max_space()
                     and not b.configuration().simulator
                     and b.status().operational == True
                 )
@@ -82,8 +83,12 @@ class IBMQBackend:
         circ = QuantumCircuit(qr, cr)
 
         empty_qubit = [i for i in range(n)]  # list of free qubit indices
-        qubit_dict = {}  # dictionary to record the correspondance of pattern nodes and circuit qubits
-        register_dict = {}  # dictionary to record the correspondance of pattern nodes and classical registers
+        qubit_dict = (
+            {}
+        )  # dictionary to record the correspondance of pattern nodes and circuit qubits
+        register_dict = (
+            {}
+        )  # dictionary to record the correspondance of pattern nodes and classical registers
         reg_idx = 0  # index of classical register
 
         def signal_process(op, signal):
@@ -130,7 +135,9 @@ class IBMQBackend:
                         # act p and h to implement non-Z-basis measurement
                         if alpha != 0:
                             signal_process("X", s_list)
-                            circ.p(-alpha, circ_idx)  # align |+_alpha> (or |+_-alpha>) with |+>
+                            circ.p(
+                                -alpha, circ_idx
+                            )  # align |+_alpha> (or |+_-alpha>) with |+>
 
                         signal_process("Z", t_list)
 
@@ -149,7 +156,9 @@ class IBMQBackend:
                         # act p and h to implement non-Z-basis measurement
                         if alpha != 0:
                             signal_process("X", s_list)
-                            circ.p(-alpha, circ_idx)  # align |+_alpha> (or |+_-alpha>) with |+>
+                            circ.p(
+                                -alpha, circ_idx
+                            )  # align |+_alpha> (or |+_-alpha>) with |+>
 
                         signal_process("Z", t_list)
 
@@ -244,7 +253,9 @@ class IBMQBackend:
         """
         if backend is None:
             backend = self.backend
-        self.circ = transpile(self.circ, backend=backend, optimization_level=optimization_level)
+        self.circ = transpile(
+            self.circ, backend=backend, optimization_level=optimization_level
+        )
 
     def simulate(self, shots=1024, noise_model=None, format_result=True):
         """simulate the circuit with Aer.

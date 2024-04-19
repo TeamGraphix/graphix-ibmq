@@ -29,9 +29,13 @@ class TestIBMQInterface(unittest.TestCase):
         ibmq_backend.to_qiskit(save_statevector=True)
         sim_result = ibmq_backend.simulate(format_result=False)
         state_qiskit = sim_result.get_statevector(ibmq_backend.circ)
-        state_qiskit_mod = modify_statevector(np.array(state_qiskit), ibmq_backend.circ_output)
+        state_qiskit_mod = modify_statevector(
+            np.array(state_qiskit), ibmq_backend.circ_output
+        )
 
-        np.testing.assert_almost_equal(np.abs(np.dot(state_qiskit_mod.conjugate(), state.flatten())), 1)
+        np.testing.assert_almost_equal(
+            np.abs(np.dot(state_qiskit_mod.conjugate(), state.flatten())), 1
+        )
 
     def test_to_qiskit_after_pauli_preprocess(self):
         nqubits = 5
@@ -47,9 +51,13 @@ class TestIBMQInterface(unittest.TestCase):
         ibmq_backend.to_qiskit(save_statevector=True)
         sim_result = ibmq_backend.simulate(format_result=False)
         state_qiskit = sim_result.get_statevector(ibmq_backend.circ)
-        state_qiskit_mod = modify_statevector(np.array(state_qiskit), ibmq_backend.circ_output)
+        state_qiskit_mod = modify_statevector(
+            np.array(state_qiskit), ibmq_backend.circ_output
+        )
 
-        np.testing.assert_almost_equal(np.abs(np.dot(state_qiskit_mod.conjugate(), state.flatten())), 1)
+        np.testing.assert_almost_equal(
+            np.abs(np.dot(state_qiskit_mod.conjugate(), state.flatten())), 1
+        )
 
 
 if __name__ == "__main__":

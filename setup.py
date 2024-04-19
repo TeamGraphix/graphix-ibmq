@@ -37,7 +37,7 @@ info = {
     ],
     "python_requires": ">=3.8,<3.12",
     "install_requires": requirements,
-    "extras_require": {"test": []},
+    "extras_require": {"test": ["graphix==0.2.8"]},
 }
 
 setup(**(info))

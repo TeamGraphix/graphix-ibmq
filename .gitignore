@@ -8,3 +8,4 @@ dist/*
 docs/source/gallery/**
 .tox/
 .python-version
+.vscode/
