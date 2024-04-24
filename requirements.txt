@@ -1,4 +1,4 @@
 numpy>=1.22,<1.26
-qiskit>=0.42
-qiskit_ibm_provider>=0.5
+qiskit==0.42
+qiskit-ibm-provider>=0.5
 qiskit-aer

@@ -1,7 +1,9 @@
 import unittest
+
 import numpy as np
-from graphix_ibmq.runner import IBMQBackend
+
 import tests.random_circuit as rc
+from graphix_ibmq.runner import IBMQBackend
 
 
 def modify_statevector(statevector, output_qubit):
