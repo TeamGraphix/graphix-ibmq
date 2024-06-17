@@ -212,3 +212,33 @@ Now let us compare the results with theoretical prediction
 .. figure:: ./../imgs/execution_output.png
    :scale: 85 %
    :alt: execution results with simulation and theoretical output
+
+This is a tutorial on how to run a pattern on IBM Quantum devices.
+
+.. code-block:: python
+
+    # Example demonstrating how to run a pattern on an IBM Quantum device. All explanations are provided as comments.
+
+    # First, load the IBMQ account using an API token.
+    """
+    from qiskit_ibm_runtime import QiskitRuntimeService
+    service = QiskitRuntimeService(channel="ibm_quantum", token="your_ibm_token", instance="ibm-q/open/main")
+    """
+
+    # Then, select the quantum system on which to run the circuit.
+    # If no system is specified, the least busy system will be automatically selected.
+    """
+    backend.get_system(service, "ibm_kyoto")
+    """
+
+    # Finally, transpile the quantum circuit for the chosen system and execute it.
+    """
+    backend.transpile()
+    result = backend.run(shots=128)
+    """
+
+    # To retrieve the result at a later time, use the code below.
+    """
+    result = backend.retrieve_result("your_job_id")
+    """
+    

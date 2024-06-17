@@ -1,8 +1,15 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from graphix.pattern import Pattern
+
 import numpy as np
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister, transpile
 from qiskit_aer import AerSimulator
 from qiskit_aer.noise import NoiseModel
-from qiskit_ibm_provider import IBMProvider, least_busy
+from qiskit_ibm_runtime import QiskitRuntimeService, IBMBackend, SamplerV2
 
 from graphix_ibmq.clifford import CLIFFORD_CONJ, CLIFFORD_TO_QISKIT
 
@@ -12,63 +19,54 @@ class IBMQBackend:
 
     Attributes
     ----------
-    pattern: :class:`graphix.pattern.Pattern` object
+    pattern: graphix.Pattern object
         MBQC pattern to be run on the device
-    circ: :class:`qiskit.circuit.quantumcircuit.QuantumCircuit` object
+    circ: qiskit.circuit.quantumcircuit.QuantumCircuit object
         qiskit circuit corresponding to the pattern.
-    job: :class:`qiskit_ibm_provider.job.ibm_circuit_job.IBMCircuitJob` object
-        job object of the execution.
-    instance : str
-        instance name of IBMQ provider.
-    resource : str
-        resource name of IBMQ provider.
-    backend : :class:`qiskit_ibm_provider.ibm_backend.IBMBackend` object
-        IBMQ device backend
+    service: qiskit_ibm_runtime.qiskit_runtime_service.QiskitRuntimeService object
+        the runtime service object.
+    system: qiskit_ibm_runtime.ibm_backend.IBMBackend object
+        the system to be used for the execution.
     """
 
-    def __init__(self, pattern):
+    def __init__(self, pattern: Pattern):
         """
 
         Parameters
         ----------
-        pattern: :class:`graphix.pattern.Pattern` object
+        pattern: graphix.Pattern object
             MBQC pattern to be run on the IBMQ device or Aer simulator.
         """
         self.pattern = pattern
+        self.to_qiskit()
 
-    def get_backend(self, instance="ibm-q/open/main", resource=None):
-        """get the backend object
+    def get_system(self, service: QiskitRuntimeService, system: str = None):
+        """Get the system to be used for the execution.
 
         Parameters
         ----------
-        instance : str
-            instance name of IBMQ provider.
-        resource : str
-            resource name of IBMQ provider.
+        service: qiskit_ibm_runtime.qiskit_runtime_service.QiskitRuntimeService object
+            the runtime service object.
+        system: str, optional
+            the system name to be used. If None, the least busy system is used.
         """
-        self.instance = instance
-        self.provider = IBMProvider(instance=self.instance)
-        if resource is not None:
-            self.resource = resource
-            self.backend = self.provider.get_backend(self.resource)
+        if not isinstance(service, QiskitRuntimeService):
+            raise ValueError("Invalid service object.")
+        self.service = service
+        if system is not None:
+            if system not in [system_cand.name for system_cand in self.service.backends()]:
+                raise ValueError(f"{system} is not available.")
+            self.system = self.service.backend(system)
         else:
-            self.backend = least_busy(
-                self.provider.backends(
-                    filters=lambda b: b.configuration().n_qubits >= self.pattern.max_space()
-                    and not b.configuration().simulator
-                    and b.status().operational == True
-                )
-            )
-            self.resource = self.backend.name
-        print(f"Using backend {self.backend.name}")
+            self.system = self.service.least_busy(min_num_qubits=self.pattern.max_space(), operational=True)
+        
+        print(f"Using system {self.system.name}")
 
-    def to_qiskit(self, save_statevector=False):
+    def to_qiskit(self, save_statevector: bool = False):
         """convert the MBQC pattern to the qiskit cuicuit and add to attributes.
 
         Parameters
         ----------
-        pattern : :class:`graphix.pattern.Pattern` object
-            MBQC pattern to be converted to qiskit circuit.
         save_statevector : bool, optional
             whether to save the statevector before the measurements of output qubits.
         """
@@ -103,9 +101,16 @@ class IBMQBackend:
                     else:
                         if self.pattern.results[s] == 1:
                             circ.z(circ_idx)
+                            
+        for i in self.pattern.input_nodes:
+            circ_idx = empty_qubit[0]
+            empty_qubit.pop(0)
+            circ.reset(circ_idx)
+            circ.h(circ_idx)
+            qubit_dict[i] = circ_idx
 
-        for cmd in self.pattern.seq:
-
+        for cmd in self.pattern:
+            
             if cmd[0] == "N":
                 circ_idx = empty_qubit[0]
                 empty_qubit.pop(0)
@@ -197,32 +202,26 @@ class IBMQBackend:
             self.register_dict = register_dict
             self.circ = circ
 
-    def set_input(self, psi):
+    def set_input(self, psi: list[list[complex]]):
         """set the input state of the circuit.
         The input states are set to the circuit qubits corresponding to the first n nodes prepared in the pattern.
 
         Parameters
         ----------
-        psi : list of list of complex
+        psi : list[list[complex]]
             list of the input states for each input.
             Each input state is a list of complex of length 2, representing the coefficient of |0> and |1>.
         """
-        n = len(self.pattern.output_nodes)
-        input_order = {}
-        idx = 0
-        for cmd in self.pattern.seq:
-            if cmd[0] == "N":
-                if cmd[1] < n:
-                    input_order[idx] = cmd[1]
-                idx += 1
-            if len(input_order) == n:
-                break
+        n = len(self.pattern.input_nodes)
+        if n != len(psi):
+            raise ValueError("Invalid input state.")
+        input_order = {i: self.pattern.input_nodes[i] for i in range(n)}
 
         idx = 0
         for k, ope in enumerate(self.circ.data):
             if ope[0].name == "reset":
                 if idx in input_order.keys():
-                    qubit_idx = ope[1][0].index
+                    qubit_idx = ope[1][0]._index
                     i = input_order[idx]
                     self.circ.initialize(psi[i], qubit_idx)
                     self.circ.data[k + 1] = self.circ.data.pop(-1)
@@ -230,21 +229,23 @@ class IBMQBackend:
             if idx >= max(input_order.keys()) + 1:
                 break
 
-    def transpile(self, backend=None, optimization_level=1):
+    def transpile(self, system: IBMBackend = None, optimization_level: int = 1):
         """transpile the circuit for the designated resource.
 
         Parameters
         ----------
-        backend : :class:`qiskit_ibm_provider.ibm_backend.IBMBackend` object, optional
-            backend to be used for transpilation.
+        system: qiskit_ibm_runtime.ibm_backend.IBMBackend object, optional
+            system to be used for transpilation.
         optimization_level : int, optional
             the optimization level of the transpilation.
         """
-        if backend is None:
-            backend = self.backend
-        self.circ = transpile(self.circ, backend=backend, optimization_level=optimization_level)
+        if system is None:
+            if not hasattr(self, "system"):
+                raise ValueError("No system is set.")
+            system = self.system
+        self.circ = transpile(self.circ, backend=system, optimization_level=optimization_level)
 
-    def simulate(self, shots=1024, noise_model=None, format_result=True):
+    def simulate(self, shots: int = 1024, noise_model: NoiseModel = None, format_result: bool = True):
         """simulate the circuit with Aer.
 
         Parameters
@@ -265,17 +266,24 @@ class IBMQBackend:
             if type(noise_model) is NoiseModel:
                 simulator = AerSimulator(noise_model=noise_model)
             else:
-                simulator = AerSimulator.from_backend(noise_model)
+                try:
+                    simulator = AerSimulator.from_backend(noise_model)
+                except:
+                    raise ValueError("Invalid noise model.")
         else:
             simulator = AerSimulator()
         circ_sim = transpile(self.circ, simulator)
-        result = simulator.run(circ_sim, shots=shots).result()
+        sampler = SamplerV2(simulator)
+        job = sampler.run([circ_sim], shots=shots)
+        result = job.result()
+        result = next((getattr(result[0].data, attr_name) for attr_name in dir(result[0].data)
+                        if attr_name.startswith('c') and attr_name[1:].isdigit()), None)
         if format_result:
             result = self.format_result(result)
 
         return result
 
-    def run(self, shots=1024, format_result=True, optimization_level=1):
+    def run(self, shots: int = 1024, format_result: bool = True, optimization_level: int = 1):
         """Run the MBQC pattern on IBMQ devices
 
         Parameters
@@ -293,15 +301,20 @@ class IBMQBackend:
             the measurement result.
         """
         self.transpile(optimization_level=optimization_level)
-        self.job = self.backend.run(self.circ, shots=shots, dynamic=True)
-        print(f"Your job's id: {self.job.job_id()}")
-        result = self.job.result()
+        if not hasattr(self, "system"):
+            raise ValueError("No system is set.")
+        sampler = SamplerV2(backend=self.system) 
+        job = sampler.run([self.circ], shots=shots)  # Pass the circuit and shot count to the run method
+        print(f"Your job's id: {job.job_id()}")
+        result = job.result()
+        result = next((getattr(result[0].data, attr_name) for attr_name in dir(result[0].data)
+                        if attr_name.startswith('c') and attr_name[1:].isdigit()), None)
         if format_result:
             result = self.format_result(result)
 
         return result
 
-    def format_result(self, result):
+    def format_result(self, result: dict[str, int]):
         """Format the result so that only the result corresponding to the output qubit is taken out.
 
         Returns
@@ -325,7 +338,7 @@ class IBMQBackend:
 
         return masked_results
 
-    def retrieve_result(self, job_id, format_result=True):
+    def retrieve_result(self, job_id: str, format_result: bool = True):
         """Retrieve the measurement results.
 
         Parameters
@@ -340,8 +353,12 @@ class IBMQBackend:
         result : dict
             the measurement result.
         """
-        self.job = self.provider.retrieve_job(job_id)
-        result = self.job.result()
+        if not hasattr(self, "service"):
+            raise ValueError("No service is set.")
+        job = self.service.job(job_id)
+        result = job.result()
+        result = next((getattr(result[0].data, attr_name) for attr_name in dir(result[0].data)
+                        if attr_name.startswith('c') and attr_name[1:].isdigit()), None)
         if format_result:
             result = self.format_result(result)
 

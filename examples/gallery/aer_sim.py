@@ -67,7 +67,7 @@ circuit.h(2)
 swap(circuit, 0, 2)
 
 # transpile and plot the graph
-pattern = circuit.transpile()
+pattern = circuit.transpile().pattern
 nodes, edges = pattern.get_graph()
 g = nx.Graph()
 g.add_nodes_from(nodes)
@@ -85,7 +85,6 @@ pattern.minimize_space()
 
 # convert to qiskit circuit
 backend = IBMQBackend(pattern)
-backend.to_qiskit()
 print(type(backend.circ))
 
 #%%
@@ -137,4 +136,32 @@ plot_histogram([count_theory, result, result_noise],
                bar_labels=False)
 legend = ax.legend(fontsize=18)
 legend = ax.legend(loc='upper left')
+# %%
+
+
+#%%
+# Example demonstrating how to run a pattern on an IBM Quantum device. All explanations are provided as comments.
+
+# First, load the IBMQ account using an API token.
+"""
+from qiskit_ibm_runtime import QiskitRuntimeService
+service = QiskitRuntimeService(channel="ibm_quantum", token="your_ibm_token", instance="ibm-q/open/main")
+"""
+
+# Then, select the quantum system on which to run the circuit.
+# If no system is specified, the least busy system will be automatically selected.
+"""
+backend.get_system(service, "ibm_kyoto")
+"""
+
+# Finally, transpile the quantum circuit for the chosen system and execute it.
+"""
+backend.transpile()
+result = backend.run(shots=128)
+"""
+
+# To retrieve the result at a later time, use the code below.
+"""
+result = backend.retrieve_result("your_job_id")
+"""
 # %%
