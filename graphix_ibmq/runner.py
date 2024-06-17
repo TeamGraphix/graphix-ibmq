@@ -59,7 +59,7 @@ class IBMQBackend:
             self.system = self.service.backend(system)
         else:
             self.system = self.service.least_busy(min_num_qubits=self.pattern.max_space(), operational=True)
-        
+
         print(f"Using system {self.system.name}")
 
     def to_qiskit(self, save_statevector: bool = False):
@@ -101,7 +101,7 @@ class IBMQBackend:
                     else:
                         if self.pattern.results[s] == 1:
                             circ.z(circ_idx)
-                            
+
         for i in self.pattern.input_nodes:
             circ_idx = empty_qubit[0]
             empty_qubit.pop(0)
@@ -110,7 +110,7 @@ class IBMQBackend:
             qubit_dict[i] = circ_idx
 
         for cmd in self.pattern:
-            
+
             if cmd[0] == "N":
                 circ_idx = empty_qubit[0]
                 empty_qubit.pop(0)
@@ -276,8 +276,14 @@ class IBMQBackend:
         sampler = SamplerV2(simulator)
         job = sampler.run([circ_sim], shots=shots)
         result = job.result()
-        result = next((getattr(result[0].data, attr_name) for attr_name in dir(result[0].data)
-                        if attr_name.startswith('c') and attr_name[1:].isdigit()), None)
+        result = next(
+            (
+                getattr(result[0].data, attr_name)
+                for attr_name in dir(result[0].data)
+                if attr_name.startswith("c") and attr_name[1:].isdigit()
+            ),
+            None,
+        )
         if format_result:
             result = self.format_result(result)
 
@@ -303,12 +309,18 @@ class IBMQBackend:
         self.transpile(optimization_level=optimization_level)
         if not hasattr(self, "system"):
             raise ValueError("No system is set.")
-        sampler = SamplerV2(backend=self.system) 
+        sampler = SamplerV2(backend=self.system)
         job = sampler.run([self.circ], shots=shots)  # Pass the circuit and shot count to the run method
         print(f"Your job's id: {job.job_id()}")
         result = job.result()
-        result = next((getattr(result[0].data, attr_name) for attr_name in dir(result[0].data)
-                        if attr_name.startswith('c') and attr_name[1:].isdigit()), None)
+        result = next(
+            (
+                getattr(result[0].data, attr_name)
+                for attr_name in dir(result[0].data)
+                if attr_name.startswith("c") and attr_name[1:].isdigit()
+            ),
+            None,
+        )
         if format_result:
             result = self.format_result(result)
 
@@ -357,8 +369,14 @@ class IBMQBackend:
             raise ValueError("No service is set.")
         job = self.service.job(job_id)
         result = job.result()
-        result = next((getattr(result[0].data, attr_name) for attr_name in dir(result[0].data)
-                        if attr_name.startswith('c') and attr_name[1:].isdigit()), None)
+        result = next(
+            (
+                getattr(result[0].data, attr_name)
+                for attr_name in dir(result[0].data)
+                if attr_name.startswith("c") and attr_name[1:].isdigit()
+            ),
+            None,
+        )
         if format_result:
             result = self.format_result(result)
 
