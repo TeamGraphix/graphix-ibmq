@@ -2,7 +2,8 @@ import unittest
 
 import numpy as np
 
-import tests.random_circuit as rc
+#import tests.random_circuit as rc
+import random_circuit as rc
 from graphix_ibmq.runner import IBMQBackend
 
 
