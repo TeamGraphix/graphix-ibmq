@@ -273,17 +273,8 @@ class IBMQBackend:
         else:
             simulator = AerSimulator()
         circ_sim = transpile(self.circ, simulator)
-        sampler = SamplerV2(simulator)
-        job = sampler.run([circ_sim], shots=shots)
+        job = simulator.run(circ_sim, shots=shots)
         result = job.result()
-        result = next(
-            (
-                getattr(result[0].data, attr_name)
-                for attr_name in dir(result[0].data)
-                if attr_name.startswith("c") and attr_name[1:].isdigit()
-            ),
-            None,
-        )
         if format_result:
             result = self.format_result(result)
 

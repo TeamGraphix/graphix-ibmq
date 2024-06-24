@@ -2,7 +2,6 @@ import unittest
 
 import numpy as np
 
-#import tests.random_circuit as rc
 import random_circuit as rc
 from graphix_ibmq.runner import IBMQBackend
 
@@ -25,7 +24,7 @@ class TestIBMQInterface(unittest.TestCase):
         depth = 5
         pairs = [(i, np.mod(i + 1, nqubits)) for i in range(nqubits)]
         circuit = rc.generate_gate(nqubits, depth, pairs)
-        pattern = circuit.transpile()
+        pattern = circuit.transpile().pattern
         state = pattern.simulate_pattern()
 
         ibmq_backend = IBMQBackend(pattern)
@@ -41,7 +40,7 @@ class TestIBMQInterface(unittest.TestCase):
         depth = 5
         pairs = [(i, np.mod(i + 1, nqubits)) for i in range(nqubits)]
         circuit = rc.generate_gate(nqubits, depth, pairs)
-        pattern = circuit.transpile()
+        pattern = circuit.transpile().pattern
         pattern.perform_pauli_measurements()
         pattern.minimize_space()
         state = pattern.simulate_pattern()
