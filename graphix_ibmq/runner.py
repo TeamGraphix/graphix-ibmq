@@ -4,6 +4,8 @@ from qiskit_aer import AerSimulator
 from qiskit_aer.noise import NoiseModel
 from qiskit_ibm_provider import IBMProvider, least_busy
 
+from graphix.command import CommandKind
+from graphix.pauli import Plane
 from graphix_ibmq.clifford import CLIFFORD_CONJ, CLIFFORD_TO_QISKIT
 
 
@@ -104,73 +106,59 @@ class IBMQBackend:
                         if self.pattern.results[s] == 1:
                             circ.z(circ_idx)
 
-        for cmd in self.pattern.seq:
+        def prepare_qubit(node):
+            circ_idx = empty_qubit[0]
+            empty_qubit.pop(0)
+            circ.reset(circ_idx)
+            circ.h(circ_idx)
+            qubit_dict[node] = circ_idx
 
-            if cmd[0] == "N":
-                circ_idx = empty_qubit[0]
-                empty_qubit.pop(0)
-                circ.reset(circ_idx)
-                circ.h(circ_idx)
-                qubit_dict[cmd[1]] = circ_idx
+        for input_node in self.pattern.input_nodes:
+            prepare_qubit(input_node)
 
-            if cmd[0] == "E":
-                circ.cz(qubit_dict[cmd[1][0]], qubit_dict[cmd[1][1]])
+        for cmd in self.pattern:
+            kind = cmd.kind
 
-            if cmd[0] == "M":
-                circ_idx = qubit_dict[cmd[1]]
-                plane = cmd[2]
-                alpha = cmd[3] * np.pi
-                s_list = cmd[4]
-                t_list = cmd[5]
+            if kind == CommandKind.N:
+                prepare_qubit(cmd.node)
 
-                if len(cmd) == 6:
-                    if plane == "XY":
-                        # act p and h to implement non-Z-basis measurement
-                        if alpha != 0:
-                            signal_process("X", s_list)
-                            circ.p(-alpha, circ_idx)  # align |+_alpha> (or |+_-alpha>) with |+>
+            if kind == CommandKind.E:
+                circ.cz(qubit_dict[cmd.nodes[0]], qubit_dict[cmd.nodes[1]])
 
-                        signal_process("Z", t_list)
+            if kind == CommandKind.M:
+                circ_idx = qubit_dict[cmd.node]
+                plane = cmd.plane
+                alpha = cmd.angle * np.pi
+                s_list = cmd.s_domain
+                t_list = cmd.t_domain
 
-                        circ.h(circ_idx)  # align |+> with |0>
-                        circ.measure(circ_idx, reg_idx)  # measure and store the result
-                        register_dict[cmd[1]] = reg_idx
-                        reg_idx += 1
-                        empty_qubit.append(circ_idx)  # liberate the circuit qubit
+                if plane == Plane.XY:
+                    # act p and h to implement non-Z-basis measurement
+                    if alpha != 0:
+                        signal_process("X", s_list)
+                        circ.p(-alpha, circ_idx)  # align |+_alpha> (or |+_-alpha>) with |+>
 
-                elif len(cmd) == 7:
-                    cid = cmd[6]
-                    for op in CLIFFORD_TO_QISKIT[CLIFFORD_CONJ[cid]]:
-                        exec(f"circ.{op}({circ_idx})")
+                    signal_process("Z", t_list)
 
-                    if plane == "XY":
-                        # act p and h to implement non-Z-basis measurement
-                        if alpha != 0:
-                            signal_process("X", s_list)
-                            circ.p(-alpha, circ_idx)  # align |+_alpha> (or |+_-alpha>) with |+>
+                    circ.h(circ_idx)  # align |+> with |0>
+                    circ.measure(circ_idx, reg_idx)  # measure and store the result
+                    register_dict[cmd.node] = reg_idx
+                    reg_idx += 1
+                    empty_qubit.append(circ_idx)  # liberate the circuit qubit
 
-                        signal_process("Z", t_list)
-
-                        circ.h(circ_idx)  # align |+> with |0>
-                        circ.measure(circ_idx, reg_idx)  # measure and store the result
-                        register_dict[cmd[1]] = reg_idx
-                        reg_idx += 1
-                        circ.measure(circ_idx, reg_idx)  # measure and store the result
-                        empty_qubit.append(circ_idx)  # liberate the circuit qubit
-
-            if cmd[0] == "X":
-                circ_idx = qubit_dict[cmd[1]]
-                s_list = cmd[2]
+            if kind == CommandKind.X:
+                circ_idx = qubit_dict[cmd.node]
+                s_list = cmd.domain
                 signal_process("X", s_list)
 
-            if cmd[0] == "Z":
-                circ_idx = qubit_dict[cmd[1]]
-                s_list = cmd[2]
+            if kind == CommandKind.Z:
+                circ_idx = qubit_dict[cmd.node]
+                s_list = cmd.domain
                 signal_process("Z", s_list)
 
-            if cmd[0] == "C":
-                circ_idx = qubit_dict[cmd[1]]
-                cid = cmd[2]
+            if kind == CommandKind.C:
+                circ_idx = qubit_dict[cmd.node]
+                cid = cmd.cliff_index
                 for op in CLIFFORD_TO_QISKIT[cid]:
                     exec(f"circ.{op}({circ_idx})")
 
@@ -211,9 +199,11 @@ class IBMQBackend:
         input_order = {}
         idx = 0
         for cmd in self.pattern.seq:
-            if cmd[0] == "N":
-                if cmd[1] < n:
-                    input_order[idx] = cmd[1]
+            kind = cmd.kind
+
+            if kind == "N":
+                if cmd.node < n:
+                    input_order[idx] = cmd.node
                 idx += 1
             if len(input_order) == n:
                 break
