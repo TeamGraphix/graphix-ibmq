@@ -12,7 +12,7 @@ from qiskit_aer.noise import NoiseModel
 from qiskit_ibm_runtime import QiskitRuntimeService, IBMBackend, SamplerV2
 
 from graphix_ibmq.clifford import CLIFFORD_TO_QISKIT
-from graphix.command import CommandKind# need to solve circular import
+from graphix.command import CommandKind  # need to solve circular import
 from graphix.pauli import Plane
 
 from qiskit.circuit.classical import expr
@@ -94,7 +94,7 @@ class IBMQBackend:
                     expr_parity = reduce(expr.bit_xor, vars)
                     with circ.if_test(expr_parity):
                         circ.x(circ_idx)
-                    
+
             if op == "Z":
                 vars = [expr.lift(circ.clbits[register_dict[s]]) for s in signal]
                 if len(vars) != 0:
@@ -127,7 +127,7 @@ class IBMQBackend:
                 alpha = cmd.angle * np.pi
                 s_list = cmd.s_domain
                 t_list = cmd.t_domain
-                
+
                 if plane == Plane.XY:
                     # act p and h to implement non-Z-basis measurement
                     if alpha != 0:
@@ -141,7 +141,7 @@ class IBMQBackend:
                     register_dict[cmd.node] = reg_idx
                     reg_idx += 1
                     empty_qubit.append(circ_idx)  # liberate the circuit qubit
-                    
+
                 else:
                     raise NotImplementedError("Non-XY plane is not supported.")
 
