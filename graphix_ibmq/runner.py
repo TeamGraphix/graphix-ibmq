@@ -11,10 +11,9 @@ from qiskit_aer import AerSimulator
 from qiskit_aer.noise import NoiseModel
 from qiskit_ibm_runtime import QiskitRuntimeService, IBMBackend, SamplerV2
 
-from graphix_ibmq.clifford import CLIFFORD_CONJ, CLIFFORD_TO_QISKIT
-from graphix import clifford, command
-from graphix.command import Command, CommandKind
-from graphix.pauli import Pauli, Plane, Sign
+from graphix_ibmq.clifford import CLIFFORD_TO_QISKIT
+from graphix.command import CommandKind# need to solve circular import
+from graphix.pauli import Plane
 
 from qiskit.circuit.classical import expr
 from functools import reduce
