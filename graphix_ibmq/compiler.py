@@ -1,5 +1,4 @@
 import numpy as np
-from typing import Optional
 from qiskit import ClassicalRegister, QuantumRegister, QuantumCircuit
 
 from graphix_ibmq.clifford import CLIFFORD_TO_QISKIT
@@ -20,9 +19,9 @@ class IBMQPatternCompiler:
         pattern : Pattern
             The measurement-based quantum computation pattern.
         """
-        self.pattern = pattern
-        self.register_dict: dict[int, int] = {}
-        self.circ_output: list[int] = []
+        self._pattern = pattern
+        self._register_dict: dict[int, int] = {}
+        self._circ_output: list[int] = []
 
     def to_qiskit_circuit(
         self, save_statevector: bool, layout_method: str
@@ -42,8 +41,8 @@ class IBMQPatternCompiler:
         QuantumCircuit
             The compiled Qiskit circuit.
         """
-        n = self.pattern.max_space()
-        N_node = self.pattern.n_node
+        n = self._pattern.max_space()
+        N_node = self._pattern.n_node
 
         qr = QuantumRegister(n)
         cr = ClassicalRegister(N_node, name="meas")
@@ -63,7 +62,7 @@ class IBMQPatternCompiler:
                         with circ.if_test((cr[s_idx], 1)):
                             circ.x(circ_idx)
                     else:
-                        if self.pattern.results[s] == 1:
+                        if self._pattern.results[s] == 1:
                             circ.x(circ_idx)
             if op == "Z":
                 for s in signal:
@@ -72,18 +71,18 @@ class IBMQPatternCompiler:
                         with circ.if_test((cr[s_idx], 1)):
                             circ.z(circ_idx)
                     else:
-                        if self.pattern.results[s] == 1:
+                        if self._pattern.results[s] == 1:
                             circ.z(circ_idx)
 
         # Prepare input qubits
-        for i in self.pattern.input_nodes:
+        for i in self._pattern.input_nodes:
             circ_idx = empty_qubit.pop(0)
             circ.reset(circ_idx)
             circ.h(circ_idx)
             qubit_dict[i] = circ_idx
 
         # Compile pattern commands
-        for cmd in self.pattern:
+        for cmd in self._pattern:
             if cmd.kind == CommandKind.N:
                 circ_idx = empty_qubit.pop(0)
                 circ.reset(circ_idx)
@@ -133,19 +132,19 @@ class IBMQPatternCompiler:
         if save_statevector:
             circ.save_statevector()
             output_qubit: list[int] = []
-            for node in self.pattern.output_nodes:
+            for node in self._pattern.output_nodes:
                 circ_idx = qubit_dict[node]
                 circ.measure(circ_idx, reg_idx)
                 register_dict[node] = reg_idx
                 reg_idx += 1
                 output_qubit.append(circ_idx)
-            self.circ_output = output_qubit
+            self._circ_output = output_qubit
         else:
-            for node in self.pattern.output_nodes:
+            for node in self._pattern.output_nodes:
                 circ_idx = qubit_dict[node]
                 circ.measure(circ_idx, reg_idx)
                 register_dict[node] = reg_idx
                 reg_idx += 1
 
-        self.register_dict = register_dict
+        self._register_dict = register_dict
         return circ

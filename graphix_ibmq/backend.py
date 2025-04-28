@@ -1,10 +1,11 @@
-from typing import Optional
+from __future__ import annotations
 
-from graphix.device_interface import DeviceBackend, CompileOptions, JobHandler
+from typing import Optional, TYPE_CHECKING
+
+from graphix.device_interface import DeviceBackend, CompileOptions, Job
 from graphix_ibmq.compiler import IBMQPatternCompiler
-from graphix_ibmq.job_handler import IBMQJobHandler
+from graphix_ibmq.job import IBMQJob
 from graphix_ibmq.compile_options import IBMQCompileOptions
-from graphix_ibmq.result_utils import format_result
 
 from qiskit import QuantumCircuit
 from qiskit_aer.noise import NoiseModel
@@ -12,6 +13,9 @@ from qiskit.providers.backend import BackendV2
 from qiskit_aer import AerSimulator
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 from qiskit_ibm_runtime import SamplerV2 as Sampler
+
+if TYPE_CHECKING:
+    from graphix.pattern import Pattern
 
 
 class IBMQBackend(DeviceBackend):
@@ -25,7 +29,7 @@ class IBMQBackend(DeviceBackend):
         self._compiled_circuit: Optional[QuantumCircuit] = None
         self._execution_mode: Optional[str] = None
 
-    def compile(self, options: Optional[CompileOptions] = None) -> None:
+    def compile(self, pattern : Pattern, options: Optional[CompileOptions] = None) -> None:
         """Compile the assigned pattern using IBMQ options.
 
         Parameters
@@ -33,16 +37,16 @@ class IBMQBackend(DeviceBackend):
         options : CompileOptions, optional
             Compilation options. Must be of type IBMQCompileOptions.
         """
-        if self.pattern is None:
-            raise ValueError("Pattern not set.")
         if options is None:
             self._options = IBMQCompileOptions()
         elif not isinstance(options, IBMQCompileOptions):
             raise TypeError("Expected IBMQCompileOptions")
         else:
             self._options = options
+            
+        self._pattern = pattern
 
-        self._compiler = IBMQPatternCompiler(self.pattern)
+        self._compiler = IBMQPatternCompiler(pattern)
         self._compiled_circuit = self._compiler.to_qiskit_circuit(
             save_statevector=self._options.save_statevector,
             layout_method=self._options.layout_method,
@@ -98,7 +102,7 @@ class IBMQBackend(DeviceBackend):
         else:
             self._resource = service.backend(name)
 
-    def submit_job(self, shots: int = 1024) -> JobHandler:
+    def submit_job(self, shots: int = 1024) -> Job:
         """Submit the compiled circuit to either simulator or hardware backend.
 
         Parameters
@@ -108,7 +112,7 @@ class IBMQBackend(DeviceBackend):
 
         Returns
         -------
-        JobHandler
+        Job
             A handle to monitor the job status and retrieve results.
 
         Raises
@@ -132,7 +136,7 @@ class IBMQBackend(DeviceBackend):
             transpiled = pm.run(self._compiled_circuit)
             sampler = Sampler(mode=self._simulator)
             job = sampler.run([transpiled], shots=shots)
-            return IBMQJobHandler(job)
+            return IBMQJob(job, self._compiler)
 
         elif self._execution_mode == "hardware":
             pm = generate_preset_pass_manager(
@@ -142,43 +146,10 @@ class IBMQBackend(DeviceBackend):
             transpiled = pm.run(self._compiled_circuit)
             sampler = Sampler(mode=self._resource)
             job = sampler.run([transpiled], shots=shots)
-            return IBMQJobHandler(job)
+            return IBMQJob(job, self._compiler)
 
         else:
             raise RuntimeError(
                 "Execution mode is not configured. Use select_backend() or set_simulator()."
             )
-
-    def retrieve_result(self, job_handle: JobHandler, raw_result: bool = False):
-        """Retrieve the result from a completed job.
-
-        Parameters
-        ----------
-        job_handle : JobHandler
-            Handle to the executed job.
-        raw_result : bool, optional
-            If True, return raw counts; otherwise, return formatted results.
-
-        Returns
-        -------
-        dict or Any
-            Formatted result or raw counts from the job.
-
-        Raises
-        ------
-        TypeError
-            If the job handle is not an instance of IBMQJobHandler.
-        """
-        if not isinstance(job_handle, IBMQJobHandler):
-            raise TypeError("Expected IBMQJobHandler")
-
-        if not job_handle.is_done():
-            print("Job not done.")
-            return None
-
-        result = job_handle.job.result()
-        counts = result[0].data.meas.get_counts()
-
-        if not raw_result:
-            return format_result(counts, self.pattern, self._compiler.register_dict)
-        return counts
+    

@@ -1,10 +1,11 @@
-from graphix.device_interface import JobHandler
+from graphix.device_interface import Job
+from graphix_ibmq.result_utils import format_result
 
 
-class IBMQJobHandler(JobHandler):
+class IBMQJob(Job):
     """Job handler class for IBMQ devices and simulators."""
 
-    def __init__(self, job) -> None:
+    def __init__(self, job, compiler) -> None:
         """
         Initialize with a Qiskit Runtime job object.
 
@@ -14,6 +15,7 @@ class IBMQJobHandler(JobHandler):
             The job object returned from Qiskit Runtime or Aer Sampler.
         """
         self.job = job
+        self._compiler = compiler
 
     def get_id(self) -> str:
         """
@@ -26,6 +28,7 @@ class IBMQJobHandler(JobHandler):
         """
         return self.job.job_id()
 
+    @property
     def is_done(self) -> bool:
         """
         Check whether the job is completed.
@@ -58,3 +61,35 @@ class IBMQJobHandler(JobHandler):
             Status string representing the job state.
         """
         return self.job.status()
+    
+    def retrieve_result(self, raw_result: bool = False):
+        """Retrieve the result from a completed job.
+
+        Parameters
+        ----------
+        job : Job
+            Handle to the executed job.
+        raw_result : bool, optional
+            If True, return raw counts; otherwise, return formatted results.
+
+        Returns
+        -------
+        dict or Any
+            Formatted result or raw counts from the job.
+
+        Raises
+        ------
+        TypeError
+            If the job handle is not an instance of IBMQJob.
+        """
+
+        if not self.is_done:
+            print("Job not done.")
+            return None
+
+        result = self.job.result()
+        counts = result[0].data.meas.get_counts()
+
+        if not raw_result:
+            return format_result(counts, self._compiler._pattern, self._compiler._register_dict)
+        return counts
