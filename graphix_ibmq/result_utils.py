@@ -3,9 +3,7 @@ from typing import Dict
 from graphix.pattern import Pattern
 
 
-def format_result(
-    result: Dict[str, int], pattern: Pattern, register_dict: Dict[int, int]
-) -> Dict[str, int]:
+def format_result(result: Dict[str, int], pattern: Pattern, register_dict: Dict[int, int]) -> Dict[str, int]:
     """Format raw measurement results into output-only bitstrings.
 
     Parameters

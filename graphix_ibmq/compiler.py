@@ -23,9 +23,7 @@ class IBMQPatternCompiler:
         self._register_dict: dict[int, int] = {}
         self._circ_output: list[int] = []
 
-    def to_qiskit_circuit(
-        self, save_statevector: bool, layout_method: str
-    ) -> QuantumCircuit:
+    def to_qiskit_circuit(self, save_statevector: bool, layout_method: str) -> QuantumCircuit:
         """
         Convert the MBQC pattern into a Qiskit QuantumCircuit.
 

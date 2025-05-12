@@ -29,7 +29,7 @@ class IBMQBackend(DeviceBackend):
         self._compiled_circuit: Optional[QuantumCircuit] = None
         self._execution_mode: Optional[str] = None
 
-    def compile(self, pattern : Pattern, options: Optional[CompileOptions] = None) -> None:
+    def compile(self, pattern: Pattern, options: Optional[CompileOptions] = None) -> None:
         """Compile the assigned pattern using IBMQ options.
 
         Parameters
@@ -43,7 +43,7 @@ class IBMQBackend(DeviceBackend):
             raise TypeError("Expected IBMQCompileOptions")
         else:
             self._options = options
-            
+
         self._pattern = pattern
 
         self._compiler = IBMQPatternCompiler(pattern)
@@ -96,9 +96,7 @@ class IBMQBackend(DeviceBackend):
         service = QiskitRuntimeService()
 
         if least_busy or name is None:
-            self._resource = service.least_busy(
-                min_num_qubits=min_qubits, operational=True
-            )
+            self._resource = service.least_busy(min_num_qubits=min_qubits, operational=True)
         else:
             self._resource = service.backend(name)
 
@@ -124,9 +122,7 @@ class IBMQBackend(DeviceBackend):
             raise RuntimeError("Pattern must be compiled before submission.")
 
         if self._execution_mode is None:
-            raise RuntimeError(
-                "Execution mode is not configured. Use select_backend() or set_simulator()."
-            )
+            raise RuntimeError("Execution mode is not configured. Use select_backend() or set_simulator().")
 
         if self._execution_mode == "simulation":
             pm = generate_preset_pass_manager(
@@ -149,7 +145,4 @@ class IBMQBackend(DeviceBackend):
             return IBMQJob(job, self._compiler)
 
         else:
-            raise RuntimeError(
-                "Execution mode is not configured. Use select_backend() or set_simulator()."
-            )
-    
+            raise RuntimeError("Execution mode is not configured. Use select_backend() or set_simulator().")

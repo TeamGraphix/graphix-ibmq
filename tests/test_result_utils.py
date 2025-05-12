@@ -1,9 +1,11 @@
 from graphix_ibmq.result_utils import format_result
 
+
 class DummyPattern:
     def __init__(self, n_node, output_nodes):
         self.n_node = n_node
         self.output_nodes = output_nodes
+
 
 def test_format_result_basic():
     # raw bitstrings: "01" が 10 回, "10" が 5 回

@@ -15,7 +15,7 @@ class IBMQCompileOptions(CompileOptions):
     layout_method : str
         Qubit layout method used by the transpiler (for future use).
     """
-    
+
     def __init__(
         self,
         optimization_level: int = 3,

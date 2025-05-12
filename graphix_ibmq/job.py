@@ -61,7 +61,7 @@ class IBMQJob(Job):
             Status string representing the job state.
         """
         return self.job.status()
-    
+
     def retrieve_result(self, raw_result: bool = False):
         """Retrieve the result from a completed job.
 
