@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Optional, TYPE_CHECKING
 
-from graphix.device_interface import DeviceBackend, CompileOptions, Job
 from graphix_ibmq.compiler import IBMQPatternCompiler
 from graphix_ibmq.job import IBMQJob
 from graphix_ibmq.compile_options import IBMQCompileOptions
@@ -18,7 +17,7 @@ if TYPE_CHECKING:
     from graphix.pattern import Pattern
 
 
-class IBMQBackend(DeviceBackend):
+class IBMQBackend:
     """IBMQ backend implementation for compiling and executing quantum patterns."""
 
     def __init__(self) -> None:
@@ -29,7 +28,7 @@ class IBMQBackend(DeviceBackend):
         self._compiled_circuit: Optional[QuantumCircuit] = None
         self._execution_mode: Optional[str] = None
 
-    def compile(self, pattern: Pattern, options: Optional[CompileOptions] = None) -> None:
+    def compile(self, pattern: Pattern, options: Optional[IBMQCompileOptions] = None) -> None:
         """Compile the assigned pattern using IBMQ options.
 
         Parameters
@@ -73,7 +72,7 @@ class IBMQBackend(DeviceBackend):
         self._noise_model = noise_model
         self._simulator = AerSimulator(noise_model=noise_model)
 
-    def select_backend(
+    def select_device(
         self,
         name: Optional[str] = None,
         least_busy: bool = False,
@@ -84,9 +83,9 @@ class IBMQBackend(DeviceBackend):
         Parameters
         ----------
         name : str, optional
-            Specific backend name to use.
+            Specific device name to use.
         least_busy : bool, optional
-            If True, select the least busy backend that meets requirements.
+            If True, select the least busy device that meets requirements.
         min_qubits : int, optional
             Minimum number of qubits required.
         """
@@ -100,7 +99,9 @@ class IBMQBackend(DeviceBackend):
         else:
             self._resource = service.backend(name)
 
-    def submit_job(self, shots: int = 1024) -> Job:
+        print(f"Selected device: {self._resource.name}")
+
+    def submit_job(self, shots: int = 1024) -> IBMQJob:
         """Submit the compiled circuit to either simulator or hardware backend.
 
         Parameters

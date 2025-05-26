@@ -1,9 +1,8 @@
 from dataclasses import dataclass
-from graphix.device_interface import CompileOptions
 
 
 @dataclass
-class IBMQCompileOptions(CompileOptions):
+class IBMQCompileOptions:
     """Compilation options specific to IBMQ backends.
 
     Attributes

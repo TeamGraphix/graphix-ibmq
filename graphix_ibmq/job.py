@@ -1,8 +1,7 @@
-from graphix.device_interface import Job
 from graphix_ibmq.result_utils import format_result
 
 
-class IBMQJob(Job):
+class IBMQJob:
     """Job handler class for IBMQ devices and simulators."""
 
     def __init__(self, job, compiler) -> None:
