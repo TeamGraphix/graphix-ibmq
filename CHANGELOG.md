@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Updated to support Qiskit 1.0.
+- Modified the APIs for Qiskit simulation and execution on IBMQ hardware.
 
 ### Fixed
 

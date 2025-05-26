@@ -4,6 +4,7 @@ from graphix_ibmq.compile_options import IBMQCompileOptions
 from qiskit import QuantumCircuit
 from qiskit_aer import AerSimulator
 
+
 class DummyCompiler:
     def __init__(self, pattern):
         self.pattern = pattern
