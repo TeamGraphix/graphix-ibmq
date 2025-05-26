@@ -1,3 +1,79 @@
 [build-system]
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
+
+[tool.ruff]
+line-length = 120
+extend-exclude = ["docs"]
+
+[tool.ruff.lint]
+preview = true
+select = ["ALL"]
+extend-ignore = [
+  "C90",     # Complexity
+  "E74",     # Ambiguous name
+  "ERA",     # Commmented out code
+  "FBT",     # Boolean positional arguments
+  "FIX",     # Fixme
+  "PLR091",  # Too many XXX
+  "PLR0904", # Too many public methods
+  "PLR2004", # Magic vavlue comparison
+  "S101",    # assert
+  "T20",     # print
+  "TD",      # Todo
+
+  # Tentative ignores
+  "ANN",     # Missing annotations
+  "CPY",     # Copyright
+  "DOC",     # Docstring
+  "E501",    # Line too long
+  "EM10",    # Raise string
+  "PLC0415", # Import not at the top level
+  "PLR1702", # Too many nests
+  "PLW1641", # __hash__ missing
+  "PT011",   # pytest raises too broad
+  "SLF001",  # Private access
+  "TRY003",  # Raise vanilla args
+
+  "D203", # `incorrect-blank-line-before-class` (D203) and `no-blank-line-before-class` (D211) are incompatible. Ignoring `incorrect-blank-line-before-class`.
+  "D213", # `multi-line-summary-first-line` (D212) and `multi-line-summary-second-line` (D213) are incompatible. Ignoring `multi-line-summary-second-line`.
+
+  # Conflicts with ruff format
+  "COM812",
+  "COM819",
+  "D206",
+  "D300",
+  "E111",
+  "E114",
+  "E117",
+  "ISC001",
+  "ISC002",
+  "Q000",
+  "Q001",
+  "Q002",
+  "Q003",
+  "W191",
+]
+# Allow "α" (U+03B1 GREEK SMALL LETTER ALPHA) which could be confused for "a"
+allowed-confusables = ["α"]
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.ruff.lint.extend-per-file-ignores]
+"benchmarks/*.py" = [
+  "D",   # Benchmarks follow Sphinx doc conventions
+  "INP", # Missing __init__.py
+]
+"examples/*.py" = [
+  "ARG",  # Unused arguments
+  "B018", # Useless expression
+  "D",    # Examples follow Sphinx doc conventions
+  "E402", # Import not at top of file
+  "INP",  # Missing __init__.py
+]
+"tests/*.py" = [
+  "D10",     # Allow undocumented items
+  "PLC2701", # Allow private imports
+  "PLR6301", # self not used
+]

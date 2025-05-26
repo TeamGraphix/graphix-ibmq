@@ -1,3 +1,5 @@
+"""Qiskit to graphix circuit converter."""
+
 from graphix import Circuit
 from qiskit import QuantumCircuit, transpile
 
@@ -14,6 +16,7 @@ def qiskit_to_graphix(qc: QuantumCircuit) -> Circuit:
 
     Returns:
         Circuit: Converted graphix circuit
+
     """
     if not isinstance(qc, QuantumCircuit):
         raise TypeError(f"qc must be QuantumCircuit, not {type(qc)}")

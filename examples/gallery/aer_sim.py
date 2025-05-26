@@ -7,15 +7,17 @@ We use the 3-qubit QFT as an example.
 
 First, let us import relevant modules and define additional gates and function we'll use:
 """
-#%%
-import numpy as np
+
+# %%
+
 import matplotlib.pyplot as plt
 import networkx as nx
-import random
+import numpy as np
 from graphix import Circuit
-from graphix_ibmq.runner import IBMQBackend
 from qiskit.tools.visualization import plot_histogram
 from qiskit_aer.noise import NoiseModel, depolarizing_error
+
+from graphix_ibmq.runner import IBMQBackend
 
 
 def cp(circuit, theta, control, target):
@@ -34,7 +36,10 @@ def swap(circuit, a, b):
     circuit.cnot(a, b)
 
 
-#%%
+rng = np.random.default_rng(seed=100)
+
+
+# %%
 # Now let us define a circuit to apply QFT to three-qubit state and transpile into MBQC measurement pattern using graphix.
 
 circuit = Circuit(3)
@@ -42,11 +47,10 @@ for i in range(3):
     circuit.h(i)
 
 psi = {}
-random.seed(100)
 # prepare random state for each input qubit
 for i in range(3):
-    theta = random.uniform(0, np.pi)
-    phi = random.uniform(0, 2 * np.pi)
+    theta = rng.uniform(0, np.pi)
+    phi = rng.uniform(0, 2 * np.pi)
     circuit.ry(i, theta)
     circuit.rz(i, phi)
     psi[i] = [np.cos(theta / 2), np.sin(theta / 2) * np.exp(1j * phi)]
@@ -72,11 +76,10 @@ nodes, edges = pattern.get_graph()
 g = nx.Graph()
 g.add_nodes_from(nodes)
 g.add_edges_from(edges)
-np.random.seed(100)
 nx.draw(g)
 plt.show()
 
-#%%
+# %%
 # Now let us convert the pattern to qiskit circuit.
 
 # minimize the space to save memory during aer simulation
@@ -87,13 +90,13 @@ pattern.minimize_space()
 backend = IBMQBackend(pattern)
 print(type(backend.circ))
 
-#%%
+# %%
 # We can now simulate the circuit with Aer.
 
 # run and get counts
 result = backend.simulate()
 
-#%%
+# %%
 # We can also simulate the circuit with noise model
 
 # create an empty noise model
@@ -105,17 +108,17 @@ noise_model.add_all_qubit_quantum_error(error, ["u1", "u2", "u3"])
 # print noise model info
 print(noise_model)
 
-#%%
+# %%
 # Now we can run the simulation with noise model
 
 # run and get counts
 result_noise = backend.simulate(noise_model=noise_model)
 
 
-#%%
+# %%
 # Now let us compare the results
 
-# calculate the analytical 
+# calculate the analytical
 state = [0] * 8
 omega = np.exp(1j * np.pi / 4)
 
@@ -129,17 +132,23 @@ for i in range(2**3):
     count_theory[f"{i:03b}"] = 1024 * np.abs(state[i]) ** 2
 
 # plot and compare the results
-fig, ax = plt.subplots(figsize=(7,5))
-plot_histogram([count_theory, result, result_noise],
-               legend=["theoretical probability", "execution result", "Aer simulation w/ noise model"],
-               ax=ax,
-               bar_labels=False)
+fig, ax = plt.subplots(figsize=(7, 5))
+plot_histogram(
+    [count_theory, result, result_noise],
+    legend=[
+        "theoretical probability",
+        "execution result",
+        "Aer simulation w/ noise model",
+    ],
+    ax=ax,
+    bar_labels=False,
+)
 legend = ax.legend(fontsize=18)
-legend = ax.legend(loc='upper left')
+legend = ax.legend(loc="upper left")
 # %%
 
 
-#%%
+# %%
 # Example demonstrating how to run a pattern on an IBM Quantum device. All explanations are provided as comments.
 
 # First, load the IBMQ account using an API token.

@@ -7,10 +7,10 @@ import os
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'graphix_ibmq'
-copyright = '2023, Team Graphix'
-author = 'Daichi Sasaki, Shinichi Sunami'
-release = '0.0.1'
+project = "graphix_ibmq"
+copyright = "2023, Team Graphix"
+author = "Daichi Sasaki, Shinichi Sunami"
+release = "0.0.1"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -59,5 +59,5 @@ sphinx_gallery_conf = {
     "examples_dirs": "../../examples/gallery",  # path to your example scripts
     "gallery_dirs": "gallery",  # path to where to save gallery generated output
     #'expected_failing_examples': ['../../examples/ibm_device.py'],
-    'filename_pattern': '/'
+    "filename_pattern": "/",
 }

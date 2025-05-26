@@ -1,17 +1,20 @@
+"""Setup file for package."""
+
+from pathlib import Path
+
 from setuptools import find_packages, setup
 
-with open("README.md", "r", encoding="utf-8") as fh:
+from graphix_ibmq.version import __version__
+
+with Path("README.md").open(encoding="utf-8") as fh:
     long_description = fh.read()
 
-version = {}
-with open("graphix_ibmq/version.py") as fp:
-    exec(fp.read(), version)
-
-requirements = [requirement.strip() for requirement in open("requirements.txt").readlines()]
+with Path("requirements.txt").open(encoding="utf-8") as fh:
+    requirements = [requirement.strip() for requirement in fh]
 
 info = {
     "name": "graphix_ibmq",
-    "version": version["__version__"],
+    "version": __version__,
     "packages": find_packages(),
     "author": "Daichi Sasaki, Shinichi Sunami",
     "author_email": "shinichi.sunami@gmail.com",
