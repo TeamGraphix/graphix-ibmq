@@ -4,24 +4,21 @@ from graphix_ibmq.compile_options import IBMQCompileOptions
 from qiskit import QuantumCircuit
 from qiskit_aer import AerSimulator
 
-# モンキーパッチ用ダミーコンパイラ
 class DummyCompiler:
     def __init__(self, pattern):
         self.pattern = pattern
 
     def to_qiskit_circuit(self, save_statevector, layout_method):
-        # シンプルな 1-qubit 回路を返す
         return QuantumCircuit(1)
 
 
 def test_compile_default(monkeypatch):
-    # IBMQPatternCompiler をダミーに置き換え
     monkeypatch.setattr("graphix_ibmq.backend.IBMQPatternCompiler", DummyCompiler)
     backend = IBMQBackend()
     dummy_pattern = object()
 
     backend.compile(dummy_pattern)
-    # 内部状態の確認
+
     assert backend._pattern is dummy_pattern
     assert isinstance(backend._compiled_circuit, QuantumCircuit)
     assert isinstance(backend._options, IBMQCompileOptions)
