@@ -1,21 +1,33 @@
+from __future__ import annotations
+
 from graphix_ibmq.result_utils import format_result
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from qiskit_ibm_runtime.fake_provider.local_runtime_job import LocalRuntimeJob
+    from qiskit_ibm_runtime.runtime_job_v2 import RuntimeJobV2
+    from graphix_ibmq.compiler import IBMQPatternCompiler
 
 
 class IBMQJob:
     """Job handler class for IBMQ devices and simulators."""
 
-    def __init__(self, job, compiler) -> None:
+    def __init__(
+        self,
+        job: LocalRuntimeJob | RuntimeJobV2,
+        compiler: IBMQPatternCompiler,
+    ) -> None:
         """
-        Initialize with a Qiskit Runtime job object.
-
         Parameters
-        ----------
-        job : Any
-            The job object returned from Qiskit Runtime or Aer Sampler.
+         ----------
+        job : LocalRuntimeJob | RuntimeJobV2
+            The job object returned from Qiskit Runtime or real v2 runtime.
         """
         self.job = job
         self._compiler = compiler
 
+    @property
     def get_id(self) -> str:
         """
         Get the unique identifier of the job.
@@ -37,29 +49,10 @@ class IBMQJob:
         bool
             True if the job is done, False otherwise.
         """
-        try:
-            # Simulator jobs typically use .status().name
-            return self.job.status().name == "DONE"
-        except AttributeError:
-            # Hardware jobs may return status as a string
-            return str(self.job.status()).upper() == "DONE"
-
-    def cancel(self) -> None:
-        """
-        Cancel the job if it's still running.
-        """
-        self.job.cancel()
-
-    def get_status(self) -> str:
-        """
-        Get the current status of the job.
-
-        Returns
-        -------
-        str
-            Status string representing the job state.
-        """
-        return self.job.status()
+        status = self.job.status()
+        if isinstance(status, str):
+            return status.upper() == "DONE"
+        return status.name == "DONE"
 
     def retrieve_result(self, raw_result: bool = False):
         """Retrieve the result from a completed job.
@@ -83,7 +76,7 @@ class IBMQJob:
         """
 
         if not self.is_done:
-            print("Job not done.")
+            # job not completed yet; skip retrieval
             return None
 
         result = self.job.result()

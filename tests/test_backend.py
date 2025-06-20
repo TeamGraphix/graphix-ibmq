@@ -7,7 +7,7 @@ from qiskit_aer import AerSimulator
 
 class DummyCompiler:
     def __init__(self, pattern):
-        self.pattern = pattern
+        self._pattern = pattern
 
     def to_qiskit_circuit(self, save_statevector, layout_method):
         return QuantumCircuit(1)
@@ -20,7 +20,7 @@ def test_compile_default(monkeypatch):
 
     backend.compile(dummy_pattern)
 
-    assert backend._pattern is dummy_pattern
+    assert backend._compiler._pattern is dummy_pattern
     assert isinstance(backend._compiled_circuit, QuantumCircuit)
     assert isinstance(backend._options, IBMQCompileOptions)
 

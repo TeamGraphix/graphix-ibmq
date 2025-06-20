@@ -1,34 +1,43 @@
 from __future__ import annotations
 
-from typing import Optional, TYPE_CHECKING
-
 from graphix_ibmq.compiler import IBMQPatternCompiler
 from graphix_ibmq.job import IBMQJob
 from graphix_ibmq.compile_options import IBMQCompileOptions
 
-from qiskit import QuantumCircuit
 from qiskit_aer.noise import NoiseModel
-from qiskit.providers.backend import BackendV2
 from qiskit_aer import AerSimulator
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 from qiskit_ibm_runtime import SamplerV2 as Sampler
 
+from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from graphix.pattern import Pattern
+    from qiskit import QuantumCircuit
+    from qiskit.providers.backend import BackendV2
 
 
 class IBMQBackend:
     """IBMQ backend implementation for compiling and executing quantum patterns."""
 
-    def __init__(self) -> None:
-        """Initialize the IBMQ backend."""
-        super().__init__()
-        self._compiler: Optional[IBMQPatternCompiler] = None
-        self._options: Optional[IBMQCompileOptions] = None
-        self._compiled_circuit: Optional[QuantumCircuit] = None
-        self._execution_mode: Optional[str] = None
+    _options: IBMQCompileOptions
+    _compiled_circuit: QuantumCircuit | None
+    _execution_mode: str | None
+    _noise_model: NoiseModel | None
+    _simulator: AerSimulator | None
+    _resource: BackendV2 | None
+    _compiler: IBMQPatternCompiler | None
 
-    def compile(self, pattern: Pattern, options: Optional[IBMQCompileOptions] = None) -> None:
+    def __init__(self) -> None:
+        self._compiler = None
+        self._options = IBMQCompileOptions()
+        self._compiled_circuit = None
+        self._execution_mode = None
+        self._noise_model = None
+        self._simulator = None
+        self._resource = None
+
+    def compile(self, pattern: Pattern, options: IBMQCompileOptions | None = None) -> None:
         """Compile the assigned pattern using IBMQ options.
 
         Parameters
@@ -43,8 +52,6 @@ class IBMQBackend:
         else:
             self._options = options
 
-        self._pattern = pattern
-
         self._compiler = IBMQPatternCompiler(pattern)
         self._compiled_circuit = self._compiler.to_qiskit_circuit(
             save_statevector=self._options.save_statevector,
@@ -53,8 +60,8 @@ class IBMQBackend:
 
     def set_simulator(
         self,
-        noise_model: Optional[NoiseModel] = None,
-        based_on: Optional[BackendV2] = None,
+        noise_model: NoiseModel | None = None,
+        based_on: BackendV2 | None = None,
     ) -> None:
         """Configure the backend to use a simulator.
 
@@ -74,7 +81,7 @@ class IBMQBackend:
 
     def select_device(
         self,
-        name: Optional[str] = None,
+        name: str | None = None,
         least_busy: bool = False,
         min_qubits: int = 1,
     ) -> None:
@@ -124,6 +131,9 @@ class IBMQBackend:
 
         if self._execution_mode is None:
             raise RuntimeError("Execution mode is not configured. Use select_backend() or set_simulator().")
+
+        if not hasattr(self, "_options") or self._options is None:
+            raise RuntimeError("Compile options are not set.")
 
         if self._execution_mode == "simulation":
             pm = generate_preset_pass_manager(

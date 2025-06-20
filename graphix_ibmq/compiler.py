@@ -1,14 +1,29 @@
+from __future__ import annotations
+
 import numpy as np
 from qiskit import ClassicalRegister, QuantumRegister, QuantumCircuit
 
-from graphix_ibmq.clifford import CLIFFORD_TO_QISKIT
-from graphix.pattern import Pattern
 from graphix.command import CommandKind
 from graphix.fundamentals import Plane
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from graphix.pattern import Pattern
+
 
 class IBMQPatternCompiler:
-    """Compiler that translates a Graphix Pattern into a Qiskit QuantumCircuit."""
+    """Compiler that translates a Graphix Pattern into a Qiskit QuantumCircuit.
+
+    Attributes
+    ----------
+    _pattern : Pattern
+        The measurement-based quantum computation pattern to compile.
+    _register_dict : dict[int, int]
+        Mapping from pattern node indices to classical register indices.
+    _circ_output : list[int]
+        List of output qubit indices in the compiled circuit.
+    """
 
     def __init__(self, pattern: Pattern) -> None:
         """
@@ -40,10 +55,10 @@ class IBMQPatternCompiler:
             The compiled Qiskit circuit.
         """
         n = self._pattern.max_space()
-        N_node = self._pattern.n_node
+        n_node = self._pattern.n_node
 
         qr = QuantumRegister(n)
-        cr = ClassicalRegister(N_node, name="meas")
+        cr = ClassicalRegister(n_node, name="meas")
         circ = QuantumCircuit(qr, cr)
 
         empty_qubit = list(range(n))  # available qubit indices
@@ -51,7 +66,7 @@ class IBMQPatternCompiler:
         register_dict: dict[int, int] = {}  # pattern node -> classical register
         reg_idx = 0
 
-        def signal_process(op: str, circ_idx: int, signal: list[int]) -> None:
+        def signal_process(op: str, circ_idx: int, signal: set[int]) -> None:
             """Apply classically-controlled X or Z gates based on measurement outcomes."""
             if op == "X":
                 for s in signal:
@@ -122,9 +137,8 @@ class IBMQPatternCompiler:
 
             elif cmd.kind == CommandKind.C:
                 circ_idx = qubit_dict[cmd.node]
-                cid = cmd.clifford
-                for op in CLIFFORD_TO_QISKIT[cid]:
-                    exec(f"circ.{op}({circ_idx})")
+                for method_name in cmd.qasm3:
+                    getattr(circ, method_name)(circ_idx)
 
         # Handle output measurements
         if save_statevector:

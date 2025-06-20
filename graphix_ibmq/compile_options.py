@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 
 
@@ -15,26 +17,9 @@ class IBMQCompileOptions:
         Qubit layout method used by the transpiler (for future use).
     """
 
-    def __init__(
-        self,
-        optimization_level: int = 3,
-        save_statevector: bool = False,
-        layout_method: str = "trivial",
-    ) -> None:
-        """Initialize the compilation options.
-
-        Parameters
-        ----------
-        optimization_level : int
-            Optimization level for Qiskit transpiler (0 to 3).
-        save_statevector : bool
-            Whether to save the statevector before measurement (for debugging/testing).
-        layout_method : str
-            Qubit layout method used by the transpiler (for future use).
-        """
-        self.optimization_level = optimization_level
-        self.save_statevector = save_statevector
-        self.layout_method = layout_method
+    optimization_level: int = 3
+    save_statevector: bool = False
+    layout_method: str = "trivial"
 
     def __repr__(self) -> str:
         """Return a string representation of the compilation options."""

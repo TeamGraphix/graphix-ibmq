@@ -1,9 +1,12 @@
-from typing import Dict
+from __future__ import annotations
 
-from graphix.pattern import Pattern
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from graphix.pattern import Pattern
 
 
-def format_result(result: Dict[str, int], pattern: Pattern, register_dict: Dict[int, int]) -> Dict[str, int]:
+def format_result(result: dict[str, int], pattern: Pattern, register_dict: dict[int, int]) -> dict[str, int]:
     """Format raw measurement results into output-only bitstrings.
 
     Parameters
@@ -20,12 +23,12 @@ def format_result(result: Dict[str, int], pattern: Pattern, register_dict: Dict[
     formatted : dict of str to int
         Dictionary of bitstrings only for output nodes and their counts.
     """
-    N_node = pattern.n_node
+    n_node = pattern.n_node
     output_keys = [register_dict[node] for node in pattern.output_nodes]
 
-    formatted: Dict[str, int] = {}
+    formatted: dict[str, int] = {}
     for bitstring, count in result.items():
-        masked = "".join(bitstring[N_node - 1 - idx] for idx in output_keys)
+        masked = "".join(bitstring[n_node - 1 - idx] for idx in output_keys)
         formatted[masked] = formatted.get(masked, 0) + count
 
     return formatted
