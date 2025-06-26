@@ -1,4 +1,4 @@
-numpy>=1.22,<1.26
+numpy
 qiskit>=1.0
-qiskit_ibm_runtime==0.37.0
+qiskit_ibm_runtime
 qiskit-aer
