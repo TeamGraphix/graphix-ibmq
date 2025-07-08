@@ -7,14 +7,7 @@ version = {}
 with open("graphix_ibmq/version.py") as fp:
     exec(fp.read(), version)
 
-# requirements = [requirement.strip() for requirement in open("requirements.txt").readlines()]
-requirements = [
-    "numpy",
-    "qiskit>=1.0",
-    "qiskit_ibm_runtime",
-    "qiskit-aer",
-    "graphix",
-]
+requirements = [requirement.strip() for requirement in open("requirements.txt").readlines()]
 
 info = {
     "name": "graphix_ibmq",

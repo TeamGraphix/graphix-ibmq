@@ -2,3 +2,4 @@ numpy
 qiskit>=1.0
 qiskit_ibm_runtime
 qiskit-aer
+graphix
