@@ -8,6 +8,7 @@ from graphix_ibmq.compiler import IBMQCompiledCircuit
 from qiskit import QuantumCircuit
 from qiskit_aer import AerSimulator
 
+
 class MockCompiler:
     def __init__(self, pattern):
         self._pattern = pattern
@@ -19,6 +20,7 @@ class MockCompiler:
             register_dict={},
             circ_output=[],
         )
+
 
 def test_compile_with_default_options(monkeypatch):
     monkeypatch.setattr("graphix_ibmq.backend.IBMQPatternCompiler", MockCompiler)
@@ -54,9 +56,7 @@ def test_set_hardware(monkeypatch):
     mock_backend_obj.name = "mock_hardware_backend"
     mock_service_instance.backend.return_value = mock_backend_obj
 
-    monkeypatch.setattr(
-        "graphix_ibmq.backend.QiskitRuntimeService", lambda: mock_service_instance
-    )
+    monkeypatch.setattr("graphix_ibmq.backend.QiskitRuntimeService", lambda: mock_service_instance)
 
     backend.set_hardware(name="mock_hardware_backend")
 
@@ -69,8 +69,8 @@ def test_submit_job_without_backend_configured():
     dummy_compiled_circuit = IBMQCompiledCircuit(
         circuit=QuantumCircuit(1), pattern=object(), register_dict={}, circ_output=[]
     )
-    
+
     with pytest.raises(RuntimeError) as exc_info:
         backend.submit_job(dummy_compiled_circuit)
-    
+
     assert "Backend not set" in str(exc_info.value)
