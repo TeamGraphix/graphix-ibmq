@@ -84,15 +84,14 @@ pattern.minimize_space()
 
 # convert to qiskit circuit
 backend = IBMQBackend()
-backend.compile(pattern)
-print(type(backend._compiled_circuit))
+compiled = backend.compile(pattern)
 
 #%%
 # We can now simulate the circuit with Aer.
 
 # run and get counts
 backend.set_simulator()
-job = backend.submit_job(shots=1024)
+job = backend.submit_job(compiled, shots=1024)
 result = job.retrieve_result()
 
 #%%
@@ -114,7 +113,7 @@ print(noise_model)
 # Now we can run the simulation with noise model
 
 # run and get counts
-job = backend.submit_job(shots=1024)
+job = backend.submit_job(compiled, shots=1024)
 result_noise = job.retrieve_result()
 
 

@@ -84,8 +84,7 @@ pattern.minimize_space()
 
 # convert to qiskit circuit
 backend = IBMQBackend()
-backend.compile(pattern)
-print(type(backend._compiled_circuit))
+compiled = backend.compile(pattern)
 
 #%%
 # load the account with API token
@@ -98,7 +97,7 @@ backend.select_device()
 #%%
 # We can now execute the circuit on the device backend.
 
-job = backend.submit_job(shots=1024)
+job = backend.submit_job(compiled, shots=1024)
 
 #%%
 # Retrieve the job result
@@ -114,7 +113,7 @@ from qiskit_ibm_runtime.fake_provider import FakeManilaV2
 backend.set_simulator(based_on=FakeManilaV2())
 
 # execute noisy simulation and get counts
-job = backend.submit_job(shots=1024)
+job = backend.submit_job(compiled, shots=1024)
 result_noise = job.retrieve_result()
 
 #%%

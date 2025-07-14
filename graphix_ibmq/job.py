@@ -1,36 +1,32 @@
 from __future__ import annotations
-
-from graphix_ibmq.result_utils import format_result
-
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
+
+from qiskit.providers.jobstatus import JobStatus
+from graphix_ibmq.result_utils import format_result
 
 if TYPE_CHECKING:
     from qiskit_ibm_runtime.fake_provider.local_runtime_job import LocalRuntimeJob
     from qiskit_ibm_runtime.runtime_job_v2 import RuntimeJobV2
-    from graphix_ibmq.compiler import IBMQPatternCompiler
+    from graphix_ibmq.compiler import IBMQCompiledCircuit
 
 
+@dataclass
 class IBMQJob:
-    """Job handler class for IBMQ devices and simulators."""
+    """
+    A handler for jobs submitted to IBMQ devices and simulators.
 
-    def __init__(
-        self,
-        job: LocalRuntimeJob | RuntimeJobV2,
-        compiler: IBMQPatternCompiler,
-    ) -> None:
-        """
-        Parameters
-         ----------
-        job : LocalRuntimeJob | RuntimeJobV2
-            The job object returned from Qiskit Runtime or real v2 runtime.
-        """
-        self.job = job
-        self._compiler = compiler
+    This class wraps a Qiskit job object and the corresponding compiled circuit,
+    providing methods to check the job's status and retrieve formatted results.
+    """
+
+    job: LocalRuntimeJob | RuntimeJobV2
+    compiled_circuit: IBMQCompiledCircuit
 
     @property
-    def get_id(self) -> str:
+    def id(self) -> str:
         """
-        Get the unique identifier of the job.
+        Returns the unique identifier of the job.
 
         Returns
         -------
@@ -42,46 +38,42 @@ class IBMQJob:
     @property
     def is_done(self) -> bool:
         """
-        Check whether the job is completed.
+        Checks if the job has completed execution.
 
         Returns
         -------
         bool
             True if the job is done, False otherwise.
         """
-        status = self.job.status()
-        if isinstance(status, str):
-            return status.upper() == "DONE"
-        return status.name == "DONE"
+        return self.job.status() == JobStatus.DONE
 
-    def retrieve_result(self, raw_result: bool = False):
-        """Retrieve the result from a completed job.
+    def retrieve_result(self, raw_result: bool = False) -> dict | None:
+        """
+        Retrieves the result from a completed job.
+
+        If the job is not yet complete, this method returns None.
 
         Parameters
         ----------
-        job : Job
-            Handle to the executed job.
         raw_result : bool, optional
-            If True, return raw counts; otherwise, return formatted results.
+            If True, returns the raw measurement counts dictionary.
+            If False (default), returns results formatted by the graphix pattern.
 
         Returns
         -------
-        dict or Any
-            Formatted result or raw counts from the job.
-
-        Raises
-        ------
-        TypeError
-            If the job handle is not an instance of IBMQJob.
+        dict or None
+            A dictionary containing the formatted results or raw counts.
+            Returns None if the job has not yet finished.
         """
-
         if not self.is_done:
-            # job not completed yet; skip retrieval
             return None
 
+        # Result from SamplerV2 contains a list of pub_results.
+        # We assume a single circuit was run, so we take the first element [0].
         result = self.job.result()
         counts = result[0].data.meas.get_counts()
 
-        if not raw_result:
-            return format_result(counts, self._compiler._pattern, self._compiler._register_dict)
-        return counts
+        if raw_result:
+            return counts
+
+        return format_result(counts, self.compiled_circuit.pattern, self.compiled_circuit.register_dict)

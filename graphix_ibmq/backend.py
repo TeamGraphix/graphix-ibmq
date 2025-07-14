@@ -1,159 +1,126 @@
 from __future__ import annotations
-
-from graphix_ibmq.compiler import IBMQPatternCompiler
-from graphix_ibmq.job import IBMQJob
-from graphix_ibmq.compile_options import IBMQCompileOptions
-
-from qiskit_aer.noise import NoiseModel
-from qiskit_aer import AerSimulator
-from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
-from qiskit_ibm_runtime import SamplerV2 as Sampler
-
 from typing import TYPE_CHECKING
+
+from qiskit_aer import AerSimulator
+from qiskit_aer.noise import NoiseModel
+from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
+from qiskit_ibm_runtime import SamplerV2 as Sampler, QiskitRuntimeService
+
+from graphix_ibmq.compile_options import IBMQCompileOptions
+from graphix_ibmq.compiler import IBMQPatternCompiler, IBMQCompiledCircuit
+from graphix_ibmq.job import IBMQJob
 
 if TYPE_CHECKING:
     from graphix.pattern import Pattern
-    from qiskit import QuantumCircuit
-    from qiskit.providers.backend import BackendV2
+    from qiskit.providers.backend import BackendV2, Backend
 
 
 class IBMQBackend:
-    """IBMQ backend implementation for compiling and executing quantum patterns."""
+    """
+    Manages compilation and execution on IBMQ simulators or hardware.
 
-    _options: IBMQCompileOptions
-    _compiled_circuit: QuantumCircuit | None
-    _execution_mode: str | None
-    _noise_model: NoiseModel | None
-    _simulator: AerSimulator | None
-    _resource: BackendV2 | None
-    _compiler: IBMQPatternCompiler | None
+    This class configures the execution target and provides methods to compile
+    a graphix Pattern and submit it as a job.
+    """
 
     def __init__(self) -> None:
-        self._compiler = None
         self._options = IBMQCompileOptions()
-        self._compiled_circuit = None
-        self._execution_mode = None
-        self._noise_model = None
-        self._simulator = None
-        self._resource = None
+        # The target backend, either a simulator or a real hardware device.
+        self._backend: Backend | None = None
 
-    def compile(self, pattern: Pattern, options: IBMQCompileOptions | None = None) -> None:
-        """Compile the assigned pattern using IBMQ options.
+    def compile(self, pattern: Pattern, options: IBMQCompileOptions | None = None) -> IBMQCompiledCircuit:
+        """
+        Compiles the given pattern into a Qiskit QuantumCircuit.
 
         Parameters
         ----------
-        options : CompileOptions, optional
-            Compilation options. Must be of type IBMQCompileOptions.
+        pattern : Pattern
+            The graphix pattern to compile.
+        options : IBMQCompileOptions, optional
+            Compilation options. If not provided, default options are used.
+
+        Returns
+        -------
+        IBMQCompiledCircuit
+            An object containing the compiled circuit and related metadata.
         """
         if options is None:
             self._options = IBMQCompileOptions()
         elif not isinstance(options, IBMQCompileOptions):
-            raise TypeError("Expected IBMQCompileOptions")
+            raise TypeError("options must be an instance of IBMQCompileOptions")
         else:
             self._options = options
 
-        self._compiler = IBMQPatternCompiler(pattern)
-        self._compiled_circuit = self._compiler.to_qiskit_circuit(
-            save_statevector=self._options.save_statevector,
-            layout_method=self._options.layout_method,
-        )
+        compiler = IBMQPatternCompiler(pattern)
+        return compiler.compile(save_statevector=self._options.save_statevector)
 
-    def set_simulator(
-        self,
-        noise_model: NoiseModel | None = None,
-        based_on: BackendV2 | None = None,
-    ) -> None:
-        """Configure the backend to use a simulator.
+    def set_simulator(self, noise_model: NoiseModel | None = None, from_backend: BackendV2 | None = None) -> None:
+        """
+        Configures the backend to use a local Aer simulator.
 
         Parameters
         ----------
         noise_model : NoiseModel, optional
-            Noise model to apply to the simulator.
-        based_on : BackendV2, optional
-            Backend to base the noise model on.
+            A custom noise model for the simulation.
+        from_backend : BackendV2, optional
+            A hardware backend to base the noise model on. Ignored if `noise_model` is provided.
         """
-        if noise_model is None and based_on is not None:
-            noise_model = NoiseModel.from_backend(based_on)
+        if noise_model is None and from_backend is not None:
+            noise_model = NoiseModel.from_backend(from_backend)
 
-        self._execution_mode = "simulation"
-        self._noise_model = noise_model
-        self._simulator = AerSimulator(noise_model=noise_model)
+        self._backend = AerSimulator(noise_model=noise_model)
+        print("Backend set to local AerSimulator.")
 
-    def select_device(
-        self,
-        name: str | None = None,
-        least_busy: bool = False,
-        min_qubits: int = 1,
-    ) -> None:
-        """Select a hardware backend from IBMQ.
+    def set_hardware(self, name: str | None = None, least_busy: bool = False, min_qubits: int = 1) -> None:
+        """
+        Selects a real hardware backend from IBM Quantum.
 
         Parameters
         ----------
         name : str, optional
-            Specific device name to use.
-        least_busy : bool, optional
-            If True, select the least busy device that meets requirements.
-        min_qubits : int, optional
-            Minimum number of qubits required.
+            The specific name of the device (e.g., 'ibm_brisbane').
+        least_busy : bool
+            If True, selects the least busy device meeting the criteria.
+        min_qubits : int
+            The minimum number of qubits required.
         """
-        from qiskit_ibm_runtime import QiskitRuntimeService
-
-        self._execution_mode = "hardware"
         service = QiskitRuntimeService()
 
-        if least_busy or name is None:
-            self._resource = service.least_busy(min_num_qubits=min_qubits, operational=True)
+        if name:
+            backend = service.backend(name)
         else:
-            self._resource = service.backend(name)
+            backend = service.least_busy(min_num_qubits=min_qubits, operational=True)
 
-        print(f"Selected device: {self._resource.name}")
+        self._backend = backend
+        # Note: In a production library, consider using the `logging` module instead of `print`.
+        print(f"Selected hardware backend: {self._backend.name}")
 
-    def submit_job(self, shots: int = 1024) -> IBMQJob:
-        """Submit the compiled circuit to either simulator or hardware backend.
+    def submit_job(self, compiled_circuit: IBMQCompiledCircuit, shots: int = 1024) -> IBMQJob:
+        """
+        Submits the compiled circuit to the configured backend for execution.
 
         Parameters
         ----------
+        compiled_circuit : IBMQCompiledCircuit
+            The compiled circuit object from the `compile` method.
         shots : int, optional
-            Number of execution shots. Defaults to 1024.
+            The number of execution shots. Defaults to 1024.
 
         Returns
         -------
-        Job
-            A handle to monitor the job status and retrieve results.
-
-        Raises
-        ------
-        RuntimeError
-            If the pattern has not been compiled or execution mode is not set.
+        IBMQJob
+            A job object to monitor execution and retrieve results.
         """
-        if self._compiled_circuit is None:
-            raise RuntimeError("Pattern must be compiled before submission.")
+        if self._backend is None:
+            raise RuntimeError("Backend not set. Call 'set_simulator()' or 'set_hardware()' before submitting a job.")
 
-        if self._execution_mode is None:
-            raise RuntimeError("Execution mode is not configured. Use select_backend() or set_simulator().")
+        pass_manager = generate_preset_pass_manager(
+            backend=self._backend,
+            optimization_level=self._options.optimization_level,
+        )
+        transpiled_circuit = pass_manager.run(compiled_circuit.circuit)
 
-        if not hasattr(self, "_options") or self._options is None:
-            raise RuntimeError("Compile options are not set.")
+        sampler = Sampler(mode=self._backend)
+        job = sampler.run([transpiled_circuit], shots=shots)
 
-        if self._execution_mode == "simulation":
-            pm = generate_preset_pass_manager(
-                backend=self._simulator,
-                optimization_level=self._options.optimization_level,
-            )
-            transpiled = pm.run(self._compiled_circuit)
-            sampler = Sampler(mode=self._simulator)
-            job = sampler.run([transpiled], shots=shots)
-            return IBMQJob(job, self._compiler)
-
-        elif self._execution_mode == "hardware":
-            pm = generate_preset_pass_manager(
-                backend=self._resource,
-                optimization_level=self._options.optimization_level,
-            )
-            transpiled = pm.run(self._compiled_circuit)
-            sampler = Sampler(mode=self._resource)
-            job = sampler.run([transpiled], shots=shots)
-            return IBMQJob(job, self._compiler)
-
-        else:
-            raise RuntimeError("Execution mode is not configured. Use select_backend() or set_simulator().")
+        return IBMQJob(job, compiled_circuit)
