@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+
 - Updated to support Qiskit 1.0.
 
 ### Fixed
@@ -17,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.0.4] - 2023-11-05
 
 ### Added
+
 - support python 3.11
 
 ## [0.0.3] - 2023-08-17

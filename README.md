@@ -8,10 +8,13 @@ Provides an interface to run MBQC pattern (`graphix.Pattern`) on IBM quantum dev
 Requires [graphix](https://github.com/TeamGraphix/graphix) to generate the measurement pattern.
 
 ## Installation
+
 install with `pip`
+
 ```
  $ pip install graphix-ibmq
 ```
+
 <!-- This can be installed as part of graphix, by
 ```
  $ pip install graphix[extra]
@@ -24,6 +27,3 @@ install with `pip`
 ## Note
 
 this project is not associated with IBM or IBMQuantum.
-
-
-
