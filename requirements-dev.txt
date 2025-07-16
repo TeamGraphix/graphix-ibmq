@@ -1,2 +1,3 @@
 graphix
+nox
 types-setuptools
