@@ -12,10 +12,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import networkx as nx
 import random
-from graphix import Circuit
-from graphix_ibmq.runner import IBMQBackend
-from qiskit.tools.visualization import plot_histogram
-from qiskit_aer.noise import NoiseModel, depolarizing_error
+from graphix.transpiler import Circuit
+from graphix_ibmq.backend import IBMQBackend
+from qiskit.visualization import plot_histogram
 
 
 def cp(circuit, theta, control, target):
@@ -84,23 +83,28 @@ plt.show()
 pattern.minimize_space()
 
 # convert to qiskit circuit
-backend = IBMQBackend(pattern)
-print(type(backend.circ))
+backend = IBMQBackend()
+compiled = backend.compile(pattern)
 
 #%%
 # We can now simulate the circuit with Aer.
 
 # run and get counts
-result = backend.simulate()
+backend.set_simulator()
+job = backend.submit_job(compiled, shots=1024)
+result = job.retrieve_result()
 
 #%%
 # We can also simulate the circuit with noise model
 
 # create an empty noise model
+from qiskit_aer.noise import NoiseModel, depolarizing_error
+
+# add depolarizing error to all single qubit gates
 noise_model = NoiseModel()
-# add depolarizing error to all single qubit u1, u2, u3 gates
 error = depolarizing_error(0.01, 1)
-noise_model.add_all_qubit_quantum_error(error, ["u1", "u2", "u3"])
+noise_model.add_all_qubit_quantum_error(error, ["id", "rz", "sx", "x", "u1"])
+backend.set_simulator(noise_model=noise_model)
 
 # print noise model info
 print(noise_model)
@@ -109,7 +113,8 @@ print(noise_model)
 # Now we can run the simulation with noise model
 
 # run and get counts
-result_noise = backend.simulate(noise_model=noise_model)
+job = backend.submit_job(compiled, shots=1024)
+result_noise = job.retrieve_result()
 
 
 #%%
@@ -136,32 +141,4 @@ plot_histogram([count_theory, result, result_noise],
                bar_labels=False)
 legend = ax.legend(fontsize=18)
 legend = ax.legend(loc='upper left')
-# %%
-
-
-#%%
-# Example demonstrating how to run a pattern on an IBM Quantum device. All explanations are provided as comments.
-
-# First, load the IBMQ account using an API token.
-"""
-from qiskit_ibm_runtime import QiskitRuntimeService
-service = QiskitRuntimeService(channel="ibm_quantum", token="your_ibm_token", instance="ibm-q/open/main")
-"""
-
-# Then, select the quantum system on which to run the circuit.
-# If no system is specified, the least busy system will be automatically selected.
-"""
-backend.get_system(service, "ibm_kyoto")
-"""
-
-# Finally, transpile the quantum circuit for the chosen system and execute it.
-"""
-backend.transpile()
-result = backend.run(shots=128)
-"""
-
-# To retrieve the result at a later time, use the code below.
-"""
-result = backend.retrieve_result("your_job_id")
-"""
 # %%

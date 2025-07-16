@@ -1,7 +1,6 @@
 import unittest
 
-import numpy as np
-from qiskit import QuantumCircuit, transpile
+from qiskit import transpile
 from qiskit.circuit.random.utils import random_circuit
 from qiskit.quantum_info import Statevector
 

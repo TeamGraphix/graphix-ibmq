@@ -9,7 +9,7 @@ First, let us import relevant modules and define quantum circuit we want to conv
 
 
 # %%
-from qiskit import QuantumCircuit, transpile
+from qiskit import transpile
 from qiskit.circuit.random.utils import random_circuit
 
 qc = random_circuit(5, 2, seed=42)
