@@ -1,3 +1,6 @@
 graphix
+mypy
 nox
+pyright
+types-networkx
 types-setuptools

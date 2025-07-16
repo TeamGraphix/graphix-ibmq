@@ -40,3 +40,8 @@ dependencies = { file = ["requirements.txt"] }
 
 [tool.setuptools.dynamic.optional-dependencies]
 dev = { file = ["requirements-dev.txt"] }
+
+[tool.mypy]
+files = ["*.py", "graphix_ibmq/**/*.py", "examples/**/*.py", "tests/**/*.py"]
+strict = true
+ignore_missing_imports = true
