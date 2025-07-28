@@ -83,14 +83,13 @@ plt.show()
 pattern.minimize_space()
 
 # convert to qiskit circuit
-backend = IBMQBackend()
+backend = IBMQBackend.from_simulator()
 compiled = backend.compile(pattern)
 
 #%%
 # We can now simulate the circuit with Aer.
 
 # run and get counts
-backend.set_simulator()
 job = backend.submit_job(compiled, shots=1024)
 result = job.retrieve_result()
 
@@ -104,7 +103,7 @@ from qiskit_aer.noise import NoiseModel, depolarizing_error
 noise_model = NoiseModel()
 error = depolarizing_error(0.01, 1)
 noise_model.add_all_qubit_quantum_error(error, ["id", "rz", "sx", "x", "u1"])
-backend.set_simulator(noise_model=noise_model)
+backend = IBMQBackend.from_simulator(noise_model=noise_model)
 
 # print noise model info
 print(noise_model)

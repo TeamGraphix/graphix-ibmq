@@ -83,7 +83,7 @@ plt.show()
 pattern.minimize_space()
 
 # convert to qiskit circuit
-backend = IBMQBackend()
+backend = IBMQBackend.from_simulator()
 compiled = backend.compile(pattern)
 
 #%%
@@ -92,11 +92,11 @@ from qiskit_ibm_runtime import QiskitRuntimeService
 QiskitRuntimeService.save_account(channel="ibm_quantum", token="API TOKEN", overwrite=True)
 
 # get the device backend
-backend.select_device()
+backend = IBMQBackend.from_hardware()
 
 #%%
 # We can now execute the circuit on the device backend.
-
+compiled = backend.compile(pattern)
 job = backend.submit_job(compiled, shots=1024)
 
 #%%
@@ -110,9 +110,10 @@ if job.is_done:
 
 # get the noise model of the device backend
 from qiskit_ibm_runtime.fake_provider import FakeManilaV2
-backend.set_simulator(based_on=FakeManilaV2())
+backend = IBMQBackend.from_simulator(from_backend=FakeManilaV2())
 
 # execute noisy simulation and get counts
+compiled = backend.compile(pattern)
 job = backend.submit_job(compiled, shots=1024)
 result_noise = job.retrieve_result()
 

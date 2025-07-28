@@ -4,10 +4,10 @@ from dataclasses import dataclass
 import numpy as np
 from qiskit import ClassicalRegister, QuantumRegister, QuantumCircuit
 
-from graphix.command import CommandKind
+from graphix.command import CommandKind, N, M, E, X, Z, C
 from graphix.fundamentals import Plane
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Mapping, Sequence, Iterable
 
 if TYPE_CHECKING:
     from graphix.pattern import Pattern
@@ -24,15 +24,22 @@ class IBMQPatternCompiler:
             The measurement-based quantum computation pattern.
         """
         self._pattern = pattern
-        self._circuit: QuantumCircuit | None = None
-        self._classical_register: ClassicalRegister | None = None
 
-        # Mappings from pattern node index to circuit/register indices
+        num_qubits = self._pattern.max_space()
+        num_nodes = self._pattern.n_node
+
+        qr = QuantumRegister(num_qubits)
+        self._classical_register = ClassicalRegister(num_nodes, name="meas")
+        self._circuit = QuantumCircuit(qr, self._classical_register)
+
+        self._available_qubits = list(range(num_qubits))
         self._qubit_map: dict[int, int] = {}
         self._creg_map: dict[int, int] = {}
-
-        self._available_qubits: list[int] = []
         self._next_creg_idx: int = 0
+
+        for node_idx in self._pattern.input_nodes:
+            circ_idx = self._allocate_qubit(node_idx)
+            self._circuit.h(circ_idx)
 
     def compile(self, save_statevector: bool = False) -> IBMQCompiledCircuit:
         """
@@ -48,7 +55,6 @@ class IBMQPatternCompiler:
         IBMQCompiledCircuit
             A data class containing the compiled circuit and associated metadata.
         """
-        self._initialize_circuit()
         self._process_commands()
         output_qubits = self._finalize_circuit(save_statevector)
 
@@ -58,25 +64,6 @@ class IBMQPatternCompiler:
             register_dict=self._creg_map,
             circ_output=output_qubits,
         )
-
-    def _initialize_circuit(self) -> None:
-        """Initializes the quantum circuit, registers, and state variables."""
-        num_qubits = self._pattern.max_space()
-        num_nodes = self._pattern.n_node
-
-        qr = QuantumRegister(num_qubits)
-        self._classical_register = ClassicalRegister(num_nodes, name="meas")
-        self._circuit = QuantumCircuit(qr, self._classical_register)
-
-        self._available_qubits = list(range(num_qubits))
-        self._qubit_map = {}
-        self._creg_map = {}
-        self._next_creg_idx = 0
-
-        # Prepare input qubits by applying a Hadamard gate.
-        for node_idx in self._pattern.input_nodes:
-            circ_idx = self._allocate_qubit(node_idx)
-            self._circuit.h(circ_idx)
 
     def _process_commands(self) -> None:
         """Iterates through and processes all commands in the pattern."""
@@ -106,18 +93,18 @@ class IBMQPatternCompiler:
         """Releases a qubit, making it available for reuse."""
         self._available_qubits.append(circ_idx)
 
-    def _apply_n(self, cmd) -> None:
+    def _apply_n(self, cmd: N) -> None:
         """Handles the N command: create a new qubit in the |+> state."""
         circ_idx = self._allocate_qubit(cmd.node)
         self._circuit.h(circ_idx)
 
-    def _apply_e(self, cmd) -> None:
+    def _apply_e(self, cmd: E) -> None:
         """Handles the E command: apply a CZ gate between two qubits."""
         qubit1 = self._qubit_map[cmd.nodes[0]]
         qubit2 = self._qubit_map[cmd.nodes[1]]
         self._circuit.cz(qubit1, qubit2)
 
-    def _apply_m(self, cmd) -> None:
+    def _apply_m(self, cmd: M) -> None:
         """Handles the M command: perform a measurement."""
         if cmd.plane != Plane.XY:
             raise NotImplementedError("Non-XY plane measurements are not supported.")
@@ -137,23 +124,23 @@ class IBMQPatternCompiler:
         self._next_creg_idx += 1
         self._release_qubit(circ_idx)
 
-    def _apply_x(self, cmd) -> None:
+    def _apply_x(self, cmd: X) -> None:
         """Handles the X command: apply a Pauli X correction."""
         circ_idx = self._qubit_map[cmd.node]
         self._apply_classical_feedforward("X", circ_idx, cmd.domain)
 
-    def _apply_z(self, cmd) -> None:
+    def _apply_z(self, cmd: Z) -> None:
         """Handles the Z command: apply a Pauli Z correction."""
         circ_idx = self._qubit_map[cmd.node]
         self._apply_classical_feedforward("Z", circ_idx, cmd.domain)
 
-    def _apply_c(self, cmd) -> None:
+    def _apply_c(self, cmd: C) -> None:
         """Handles the C command: apply a custom Qiskit circuit method."""
         circ_idx = self._qubit_map[cmd.node]
         for method_name in cmd.qasm3:
             getattr(self._circuit, method_name)(circ_idx)
 
-    def _apply_classical_feedforward(self, op: str, target_qubit: int, domain: set[int]) -> None:
+    def _apply_classical_feedforward(self, op: str, target_qubit: int, domain: Iterable[int]) -> None:
         """Applies classically-controlled X or Z gates based on measurement outcomes."""
         gate_map = {"X": self._circuit.x, "Z": self._circuit.z}
         if op not in gate_map:
@@ -193,13 +180,13 @@ class IBMQCompiledCircuit:
     ----------
     circuit : QuantumCircuit
         The Qiskit quantum circuit generated from the pattern.
-    register_dict : dict[int, int]
+    register_dict : Mapping[int, int]
         Mapping from pattern node indices to classical register indices.
-    circ_output : list[int]
+    circ_output : Sequence[int]
         List of output qubit indices in the compiled circuit.
     """
 
     circuit: QuantumCircuit
     pattern: Pattern
-    register_dict: dict[int, int]
-    circ_output: list[int]
+    register_dict: Mapping[int, int]
+    circ_output: Sequence[int]

@@ -47,7 +47,7 @@ class IBMQJob:
         """
         return self.job.status() == JobStatus.DONE
 
-    def retrieve_result(self, raw_result: bool = False) -> dict | None:
+    def retrieve_result(self, raw_result: bool = False) -> dict[str, int] | None:
         """
         Retrieves the result from a completed job.
 

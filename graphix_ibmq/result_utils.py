@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Mapping
 
 if TYPE_CHECKING:
     from graphix.pattern import Pattern
 
 
-def format_result(result: dict[str, int], pattern: Pattern, register_dict: dict[int, int]) -> dict[str, int]:
+def format_result(result: Mapping[str, int], pattern: Pattern, register_dict: Mapping[int, int]) -> dict[str, int]:
     """Format raw measurement results into output-only bitstrings.
 
     Parameters
