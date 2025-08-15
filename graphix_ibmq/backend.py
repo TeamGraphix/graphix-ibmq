@@ -13,7 +13,7 @@ from graphix_ibmq.job import IBMQJob
 
 if TYPE_CHECKING:
     from graphix.pattern import Pattern
-    from qiskit.providers.backend import BackendV2, Backend
+    from qiskit.providers.backend import BackendV2
 
 logger = logging.getLogger(__name__)
 
@@ -27,14 +27,14 @@ class IBMQBackend:
     the `from_simulator` or `from_hardware` classmethods.
     """
 
-    def __init__(self, backend: Backend | None = None, options: IBMQCompileOptions | None = None) -> None:
+    def __init__(self, backend: BackendV2 | None = None, options: IBMQCompileOptions | None = None) -> None:
         if backend is None or options is None:
             raise TypeError(
                 "IBMQBackend cannot be instantiated directly. "
                 "Please use the classmethods `IBMQBackend.from_simulator()` "
                 "or `IBMQBackend.from_hardware()`."
             )
-        self._backend: Backend = backend
+        self._backend: BackendV2 = backend
         self._options: IBMQCompileOptions = options
 
     @classmethod
@@ -69,7 +69,6 @@ class IBMQBackend:
     def from_hardware(
         cls,
         name: str | None = None,
-        least_busy: bool = False,
         min_qubits: int = 1,
         options: IBMQCompileOptions | None = None,
     ) -> IBMQBackend:
@@ -78,9 +77,8 @@ class IBMQBackend:
         Parameters
         ----------
         name : str, optional
-            The specific name of the device (e.g., 'ibm_brisbane').
-        least_busy : bool
-            If True, selects the least busy device meeting the criteria.
+            The specific name of the device (e.g., 'ibm_brisbane'). If None,
+            the least busy backend with at least `min_qubits` will be selected.
         min_qubits : int
             The minimum number of qubits required.
         options : IBMQCompileOptions, optional

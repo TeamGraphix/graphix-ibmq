@@ -6,6 +6,7 @@ from qiskit import ClassicalRegister, QuantumRegister, QuantumCircuit
 
 from graphix.command import CommandKind, N, M, E, X, Z, C
 from graphix.fundamentals import Plane
+from qiskit.circuit.classical import expr
 
 from typing import TYPE_CHECKING, Mapping, Sequence, Iterable
 
@@ -137,7 +138,7 @@ class IBMQPatternCompiler:
     def _apply_c(self, cmd: C) -> None:
         """Handles the C command: apply a custom Qiskit circuit method."""
         circ_idx = self._qubit_map[cmd.node]
-        for method_name in cmd.qasm3:
+        for method_name in cmd.clifford.qasm3:
             getattr(self._circuit, method_name)(circ_idx)
 
     def _apply_classical_feedforward(self, op: str, target_qubit: int, domain: Iterable[int]) -> None:
@@ -151,7 +152,9 @@ class IBMQPatternCompiler:
         for node_idx in domain:
             if node_idx in self._creg_map:
                 creg_idx = self._creg_map[node_idx]
-                with self._circuit.if_test((self._classical_register[creg_idx], 1)):
+                clbit = self._classical_register[creg_idx]
+                cond = expr.equal(clbit, True)
+                with self._circuit.if_test(cond):
                     apply_gate(target_qubit)
             elif self._pattern.results.get(node_idx) == 1:
                 apply_gate(target_qubit)

@@ -1,5 +1,5 @@
 numpy
-qiskit>=1.0
+qiskit>=1.0,<2
 qiskit_ibm_runtime
 qiskit-aer
 graphix
