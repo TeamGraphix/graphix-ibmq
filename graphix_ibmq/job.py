@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 from qiskit.providers.jobstatus import JobStatus
 from graphix_ibmq.result_utils import format_result
@@ -33,7 +33,8 @@ class IBMQJob:
         str
             The job ID.
         """
-        return cast(str, self.job.job_id())
+        job_id: str = self.job.job_id() 
+        return job_id
 
     @property
     def is_done(self) -> bool:
@@ -45,7 +46,8 @@ class IBMQJob:
         bool
             True if the job is done, False otherwise.
         """
-        return cast(bool, self.job.status() == JobStatus.DONE)
+        is_done: bool = self.job.status() is JobStatus.DONE
+        return is_done
 
     def retrieve_result(self, raw_result: bool = False) -> dict[str, int] | None:
         """
@@ -71,7 +73,7 @@ class IBMQJob:
         # Result from SamplerV2 contains a list of pub_results.
         # We assume a single circuit was run, so we take the first element [0].
         result = self.job.result()
-        counts = cast(dict[str, int], result[0].data.meas.get_counts())
+        counts: dict[str, int] = result[0].data.meas.get_counts()
 
         if raw_result:
             return counts

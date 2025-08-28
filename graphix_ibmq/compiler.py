@@ -4,15 +4,16 @@ from dataclasses import dataclass
 import numpy as np
 from qiskit import ClassicalRegister, QuantumRegister, QuantumCircuit
 
-from graphix.command import CommandKind, N, M, E, X, Z, C
+from graphix.command import Command, CommandKind, N, M, E, X, Z, C
 from graphix.fundamentals import Plane
 from qiskit.circuit.classical import expr
 
-from typing import TYPE_CHECKING, Mapping, Sequence, Iterable
+from typing import TYPE_CHECKING, Callable, Mapping, Sequence, Iterable
 
 if TYPE_CHECKING:
     from graphix.pattern import Pattern
 
+CommandHandler = Callable[[Command], None]
 
 class IBMQPatternCompiler:
     def __init__(self, pattern: Pattern) -> None:
@@ -68,18 +69,19 @@ class IBMQPatternCompiler:
 
     def _process_commands(self) -> None:
         """Iterates through and processes all commands in the pattern."""
-        command_handlers = {
-            CommandKind.N: self._apply_n,
-            CommandKind.E: self._apply_e,
-            CommandKind.M: self._apply_m,
-            CommandKind.X: self._apply_x,
-            CommandKind.Z: self._apply_z,
-            CommandKind.C: self._apply_c,
-        }
-        for cmd in self._pattern:
-            handler = command_handlers.get(cmd.kind)
-            if handler:
-                handler(cmd)
+        for cmd in self._pattern:  # Iterable[Command]
+            if isinstance(cmd, N):
+                self._apply_n(cmd)
+            elif isinstance(cmd, E):
+                self._apply_e(cmd)
+            elif isinstance(cmd, M):
+                self._apply_m(cmd)
+            elif isinstance(cmd, X):
+                self._apply_x(cmd)
+            elif isinstance(cmd, Z):
+                self._apply_z(cmd)
+            elif isinstance(cmd, C):
+                self._apply_c(cmd)
 
     def _allocate_qubit(self, node_idx: int) -> int:
         """Allocates a qubit from the pool, resets it, and maps it to a node."""
