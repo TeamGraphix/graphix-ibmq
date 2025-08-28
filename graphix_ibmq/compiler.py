@@ -4,7 +4,7 @@ from dataclasses import dataclass
 import numpy as np
 from qiskit import ClassicalRegister, QuantumRegister, QuantumCircuit
 
-from graphix.command import Command, CommandKind, N, M, E, X, Z, C
+from graphix.command import Command, N, M, E, X, Z, C
 from graphix.fundamentals import Plane
 from qiskit.circuit.classical import expr
 
@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from graphix.pattern import Pattern
 
 CommandHandler = Callable[[Command], None]
+
 
 class IBMQPatternCompiler:
     def __init__(self, pattern: Pattern) -> None:

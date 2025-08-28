@@ -33,7 +33,7 @@ class IBMQJob:
         str
             The job ID.
         """
-        job_id: str = self.job.job_id() 
+        job_id: str = self.job.job_id()
         return job_id
 
     @property
