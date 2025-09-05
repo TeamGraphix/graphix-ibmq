@@ -18,7 +18,10 @@ def test_compile_is_static_and_works(monkeypatch):
     # Arrange
     mock_compiler_instance = MagicMock()
     mock_compiled_circuit = IBMQCompiledCircuit(
-        circuit=QuantumCircuit(1), pattern=DUMMY_PATTERN, register_dict={}, circ_output=[]
+        circuit=QuantumCircuit(1),
+        pattern=DUMMY_PATTERN,
+        register_dict={},
+        circ_output=[],
     )
     mock_compiler_instance.compile.return_value = mock_compiled_circuit
 
@@ -57,7 +60,9 @@ def test_from_hardware_creates_instance(monkeypatch):
     mock_backend_obj = MagicMock()
     mock_backend_obj.name = "mock_hardware_backend"
     mock_service_instance.backend.return_value = mock_backend_obj
-    monkeypatch.setattr("graphix_ibmq.backend.QiskitRuntimeService", lambda: mock_service_instance)
+    monkeypatch.setattr(
+        "graphix_ibmq.backend.QiskitRuntimeService", lambda: mock_service_instance
+    )
 
     # Act
     backend = IBMQBackend.from_hardware(name="mock_hardware_backend")
@@ -86,23 +91,35 @@ def test_submit_job_calls_sampler(monkeypatch):
     mock_qiskit_backend = MagicMock()
     # Use patch to temporarily replace the classmethod's implementation
     with patch.object(
-        IBMQBackend, "from_hardware", return_value=IBMQBackend(mock_qiskit_backend, IBMQCompileOptions())
+        IBMQBackend,
+        "from_hardware",
+        return_value=IBMQBackend(mock_qiskit_backend, IBMQCompileOptions()),
     ):
         backend = IBMQBackend.from_hardware()
 
     # 2. Mock the transpiler and sampler
     mock_pass_manager = MagicMock()
-    mock_pass_manager.run.return_value = QuantumCircuit(1)  # Return a dummy transpiled circuit
-    monkeypatch.setattr("graphix_ibmq.backend.generate_preset_pass_manager", MagicMock(return_value=mock_pass_manager))
+    mock_pass_manager.run.return_value = QuantumCircuit(
+        1
+    )  # Return a dummy transpiled circuit
+    monkeypatch.setattr(
+        "graphix_ibmq.backend.generate_preset_pass_manager",
+        MagicMock(return_value=mock_pass_manager),
+    )
 
     mock_sampler_instance = MagicMock()
     mock_job = MagicMock()
     mock_sampler_instance.run.return_value = mock_job
-    monkeypatch.setattr("graphix_ibmq.backend.Sampler", MagicMock(return_value=mock_sampler_instance))
+    monkeypatch.setattr(
+        "graphix_ibmq.backend.Sampler", MagicMock(return_value=mock_sampler_instance)
+    )
 
     # 3. Create a dummy compiled circuit to submit
     dummy_compiled_circuit = IBMQCompiledCircuit(
-        circuit=QuantumCircuit(1), pattern=DUMMY_PATTERN, register_dict={}, circ_output=[]
+        circuit=QuantumCircuit(1),
+        pattern=DUMMY_PATTERN,
+        register_dict={},
+        circ_output=[],
     )
 
     # Act
