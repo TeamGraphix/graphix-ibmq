@@ -9,8 +9,6 @@ def test_default_options():
 
 
 def test_repr():
-    opts = IBMQCompileOptions(
-        optimization_level=2, save_statevector=True, layout_method="dense"
-    )
+    opts = IBMQCompileOptions(optimization_level=2, save_statevector=True, layout_method="dense")
     expected = "IBMQCompileOptions(optimization_level=2, save_statevector=True, layout_method='dense')"
     assert repr(opts) == expected

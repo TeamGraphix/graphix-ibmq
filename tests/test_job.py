@@ -62,20 +62,14 @@ def test_id_property_returns_job_id(counts):
 
 
 def test_is_done_true_false(counts):
-    job_done = IBMQJob(
-        job=FakeJobDone("ID", counts), compiled_circuit=FakeCompiledCircuit()
-    )
-    job_run = IBMQJob(
-        job=FakeJobRunning("ID", counts), compiled_circuit=FakeCompiledCircuit()
-    )
+    job_done = IBMQJob(job=FakeJobDone("ID", counts), compiled_circuit=FakeCompiledCircuit())
+    job_run = IBMQJob(job=FakeJobRunning("ID", counts), compiled_circuit=FakeCompiledCircuit())
     assert job_done.is_done is True
     assert job_run.is_done is False
 
 
 def test_retrieve_result_returns_none_if_not_done(counts):
-    job = IBMQJob(
-        job=FakeJobRunning("ID", counts), compiled_circuit=FakeCompiledCircuit()
-    )
+    job = IBMQJob(job=FakeJobRunning("ID", counts), compiled_circuit=FakeCompiledCircuit())
     assert job.retrieve_result() is None
     assert job.retrieve_result(raw_result=True) is None
 
