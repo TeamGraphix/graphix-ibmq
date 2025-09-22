@@ -29,7 +29,7 @@ First, let us import relevant modules and define function we will use:
 .. code-block:: python
 
     from graphix import Circuit
-    from graphix_ibmq.runner import IBMQBackend
+    from graphix_ibmq.backend import IBMQBackend
     import qiskit.quantum_info as qi
     from qiskit.visualization import plot_histogram
     import numpy as np

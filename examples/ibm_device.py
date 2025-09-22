@@ -12,10 +12,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import networkx as nx
 import random
-from graphix import Circuit
-from graphix_ibmq.runner import IBMQBackend
-from qiskit_ibm_provider import IBMProvider
-from qiskit.tools.visualization import plot_histogram
+from graphix.transpiler import Circuit
+from graphix_ibmq.backend import IBMQBackend
+from qiskit.visualization import plot_histogram
 from qiskit.providers.fake_provider import FakeLagos
 
 
@@ -68,7 +67,7 @@ circuit.h(2)
 swap(circuit, 0, 2)
 
 # transpile and plot the graph
-pattern = circuit.transpile()
+pattern = circuit.transpile().pattern
 nodes, edges = pattern.get_graph()
 g = nx.Graph()
 g.add_nodes_from(nodes)
@@ -84,45 +83,39 @@ plt.show()
 pattern.minimize_space()
 
 # convert to qiskit circuit
-backend = IBMQBackend(pattern)
-backend.to_qiskit()
-print(type(backend.circ))
+backend = IBMQBackend.from_simulator()
+compiled = backend.compile(pattern)
 
 #%%
 # load the account with API token
-IBMProvider.save_account(token='MY API TOKEN')
+from qiskit_ibm_runtime import QiskitRuntimeService
+QiskitRuntimeService.save_account(channel="ibm_quantum", token="API TOKEN", overwrite=True)
 
 # get the device backend
-instance_name = 'ibm-q/open/main'
-backend_name = "ibm_lagos"
-backend.get_backend(instance=instance_name,resource=backend_name)
-
-#%%
-# Get provider and the backend.
-
-instance_name = "ibm-q/open/main"
-backend_name = "ibm_lagos"
-
-backend.get_backend(instance=instance_name, resource=backend_name)
+backend = IBMQBackend.from_hardware()
 
 #%%
 # We can now execute the circuit on the device backend.
-
-result = backend.run()
-
-#%%
-# Retrieve the job if needed
-
-# result = backend.retrieve_result("Job ID")
+compiled = backend.compile(pattern)
+job = backend.submit_job(compiled, shots=1024)
 
 #%%
-# We can simulate the circuit with noise model based on the device we used
+# Retrieve the job result
+
+if job.is_done:
+    result = job.retrieve_result()
+
+#%%
+# We can simulate the circuit with device-based noise model.
 
 # get the noise model of the device backend
-backend_noisemodel = FakeLagos()
+from qiskit_ibm_runtime.fake_provider import FakeManilaV2
+backend = IBMQBackend.from_simulator(from_backend=FakeManilaV2())
 
 # execute noisy simulation and get counts
-result_noise = backend.simulate(noise_model=backend_noisemodel)
+compiled = backend.compile(pattern)
+job = backend.submit_job(compiled, shots=1024)
+result_noise = job.retrieve_result()
 
 #%%
 # Now let us compare the results with theoretical output

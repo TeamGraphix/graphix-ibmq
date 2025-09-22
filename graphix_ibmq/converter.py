@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from graphix import Circuit
 from qiskit import QuantumCircuit, transpile
 

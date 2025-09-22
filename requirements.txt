@@ -1,4 +1,5 @@
-numpy>=1.22,<1.26
-qiskit>=1.0
+numpy
+qiskit>=1.0,<2
 qiskit_ibm_runtime
 qiskit-aer
+graphix
