@@ -2,7 +2,7 @@ numpy
 qiskit>=1.0,<2
 qiskit_ibm_runtime
 qiskit-aer
-graphix @ git+https://github.com/TeamGraphix/graphix@master
+graphix @ git+https://github.com/matulni/graphix@rename_methods
 # The following contraints on `pydantic-core` and `symengine` are required for
 # Python 3.14
 pydantic-core>=2.41.5
