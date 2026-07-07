@@ -8,10 +8,11 @@ We use the 3-qubit QFT as an example.
 First, let us import relevant modules and define additional gates and function we'll use:
 """
 #%%
-import numpy as np
+import random
+
 import matplotlib.pyplot as plt
 import networkx as nx
-import random
+import numpy as np
 from graphix.transpiler import Circuit
 from graphix_ibmq.backend import IBMQBackend
 from qiskit.visualization import plot_histogram
@@ -67,7 +68,7 @@ swap(circuit, 0, 2)
 
 # transpile and plot the graph
 pattern = circuit.transpile().pattern
-g = pattern.extract_graph()
+g = pattern.graph()
 np.random.seed(100)
 nx.draw(g)
 plt.show()
