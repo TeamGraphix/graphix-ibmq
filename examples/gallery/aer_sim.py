@@ -68,7 +68,7 @@ swap(circuit, 0, 2)
 
 # transpile and plot the graph
 pattern = circuit.transpile().pattern
-g = pattern.graph()
+g = pattern.to_opengraph().graph
 np.random.seed(100)
 nx.draw(g)
 plt.show()
