@@ -15,5 +15,5 @@ class TestConverter(unittest.TestCase):
         sv = Statevector.from_instruction(qc)
         sv = sv.reverse_qargs()
         gx_sv = gx_qc.simulate()
-        gx_sv = Statevector(gx_sv.statevec.flatten())
+        gx_sv = Statevector(gx_sv.state.flatten())
         self.assertTrue(sv.equiv(gx_sv))
