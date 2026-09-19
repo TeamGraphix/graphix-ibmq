@@ -1,5 +1,7 @@
 import pytest
 import numpy as np
+from numpy.random import Generator
+
 from qiskit import transpile
 from qiskit_aer import AerSimulator
 from graphix_ibmq.compiler import IBMQPatternCompiler
@@ -25,14 +27,14 @@ def reduce_statevector_to_outputs(statevector: np.ndarray, output_qubits: list) 
         (5, 5),
     ],
 )
-def test_ibmq_compiler_statevector_equivalence(nqubits, depth):
+def test_ibmq_compiler_statevector_equivalence(fx_rng: Generator, nqubits: int, depth: int) -> None:
     """Test that IBMQPatternCompiler circuit reproduces the same statevector as MBQC simulation."""
     sim = AerSimulator()
 
     for _ in range(5):  # repeat with different random circuits
-        circuit = rc.rand_circuit(nqubits, depth)
+        circuit = rc.rand_circuit(nqubits, depth, rng=fx_rng)
         pattern = circuit.transpile().pattern
-        mbqc_state = pattern.simulate_pattern()
+        mbqc_state = pattern.simulate(rng=fx_rng)
 
         compiler = IBMQPatternCompiler(pattern)
         compiled = compiler.compile(save_statevector=True)

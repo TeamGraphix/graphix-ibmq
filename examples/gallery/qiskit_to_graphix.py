@@ -37,7 +37,7 @@ sv = Statevector.from_instruction(qc)
 sv = sv.reverse_qargs()  # Note that qiskit and graphix use different qubit ordering
 
 gx_qc = qiskit_to_graphix(qc)
-gx_sv = gx_qc.simulate_statevector()
+gx_sv = gx_qc.simulate()
 gx_sv = Statevector(gx_sv.flatten())
 
 sv.equiv(gx_sv)

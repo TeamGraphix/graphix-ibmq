@@ -14,6 +14,6 @@ class TestConverter(unittest.TestCase):
         gx_qc = qiskit_to_graphix(qc)
         sv = Statevector.from_instruction(qc)
         sv = sv.reverse_qargs()
-        gx_sv = gx_qc.simulate_statevector()
-        gx_sv = Statevector(gx_sv.statevec.flatten())
+        gx_sv = gx_qc.simulate()
+        gx_sv = Statevector(gx_sv.state.flatten())
         self.assertTrue(sv.equiv(gx_sv))
