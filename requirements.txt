@@ -7,3 +7,7 @@ graphix>=0.4
 # Python 3.14
 pydantic-core>=2.41.5
 symengine>=0.14
+# Older versions of ibm-platform-services, selected because of the
+# qiskit<2 constraint, fail to build with recent versions of
+# setuptools
+ibm-platform-services>=0.77.1
